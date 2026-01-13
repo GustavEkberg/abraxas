@@ -342,6 +342,51 @@ Write tests for:
 - Keyboard shortcuts
 - Export data
 
+## API Routes Pattern
+
+### Authentication Helper
+
+All API routes use the `requireAuth` helper from `lib/api/auth.ts`:
+
+```typescript
+import { requireAuth } from "@/lib/api/auth"
+
+export async function GET(request: NextRequest) {
+  const session = await requireAuth(request)
+  if (session instanceof NextResponse) return session
+  
+  // Use session.userId safely
+  const data = await fetchData(session.userId)
+  return NextResponse.json(data)
+}
+```
+
+**Benefits:**
+- Eliminates auth boilerplate (3 lines vs 8 lines)
+- Type-safe `AuthSession` with `userId` and `user` properties
+- Consistent error responses (401 Unauthorized)
+- Easy to extend with role checks or permissions
+
+**DO NOT duplicate authentication code in routes - always use `requireAuth`**
+
+### Next.js 16 Async Params
+
+In Next.js 16, dynamic route params are now async:
+
+```typescript
+// Correct pattern for [id] routes
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params  // Await params first
+  const session = await requireAuth(request)
+  if (session instanceof NextResponse) return session
+  
+  // Use id and session.userId
+}
+```
+
 ## File Structure
 
 ```
@@ -351,13 +396,18 @@ Write tests for:
     /page.tsx          # Rituals list (main dashboard)
     /rituals/[id]      # Ritual board view
   /api                 # API routes
+    /rituals           # Ritual CRUD endpoints
 /components
   /ui                  # shadcn components
   /board               # Board-specific components
   /tasks               # Task card components
   /rituals             # Ritual components
 /lib
-  /db                  # Database client
+  /api                 # API utilities (auth helpers)
+  /db                  # Database client and layers
+    /client.ts         # Drizzle client
+    /sql-layer.ts      # Effect SQL layer
+    /drizzle-layer.ts  # DrizzleService tag
   /effects             # Effect-based services
   /sprite              # Sprite.dev integration (stubbed)
   /github              # GitHub API integration
