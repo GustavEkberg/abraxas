@@ -1,24 +1,24 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { Card } from "@/components/ui/card"
+import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { Card } from "@/components/ui/card";
 
 interface Ritual {
-  id: string
-  name: string
-  description: string | null
-  repositoryPath: string
+  id: string;
+  name: string;
+  description: string | null;
+  repositoryPath: string;
 }
 
 interface Task {
-  id: string
-  title: string
-  description: string
-  status: string
-  priority: string | null
-  executionState: string
-  createdAt: Date
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  priority: string | null;
+  executionState: string;
+  createdAt: Date;
 }
 
 const COLUMNS = [
@@ -58,7 +58,7 @@ const COLUMNS = [
     description: "Successfully completed",
     color: "border-green-500/20",
   },
-] as const
+] as const;
 
 /**
  * Ritual board view with six mystical columns.
@@ -67,41 +67,35 @@ const COLUMNS = [
 export default function RitualBoardPage({
   params,
 }: {
-  params: Promise<{ id: string }>
+  params: Promise<{ id: string; }>;
 }) {
-  const router = useRouter()
-  const [ritualId, setRitualId] = useState<string | null>(null)
-  const [ritual, setRitual] = useState<Ritual | null>(null)
-  const [tasks, setTasks] = useState<Task[]>([])
-  const [loading, setLoading] = useState(true)
+  const router = useRouter();
+  const [ritualId, setRitualId] = useState<string | null>(null);
+  const [ritual, setRitual] = useState<Ritual | null>(null);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    params.then((p) => setRitualId(p.id))
-  }, [params])
+    params.then((p) => setRitualId(p.id));
+  }, [params]);
 
-  useEffect(() => {
-    if (!ritualId) return
-    fetchRitual()
-    fetchTasks()
-  }, [ritualId])
-
-  const fetchRitual = async () => {
-    if (!ritualId) return
+  const fetchRitual = useCallback(async () => {
+    if (!ritualId) return;
     try {
-      const response = await fetch(`/api/rituals/${ritualId}`)
+      const response = await fetch(`/api/rituals/${ritualId}`);
       if (response.ok) {
-        const data = await response.json()
-        setRitual(data)
+        const data = await response.json();
+        setRitual(data);
       } else if (response.status === 404) {
-        router.push("/")
+        router.push("/");
       }
     } catch (error) {
-      console.error("Failed to fetch ritual:", error)
+      console.error("Failed to fetch ritual:", error);
     }
-  }
+  }, [ritualId, router]);
 
-  const fetchTasks = async () => {
-    if (!ritualId) return
+  const fetchTasks = useCallback(async () => {
+    if (!ritualId) return;
     try {
       // TODO: Implement tasks API endpoint
       // const response = await fetch(`/api/rituals/${ritualId}/tasks`)
@@ -109,24 +103,30 @@ export default function RitualBoardPage({
       //   const data = await response.json()
       //   setTasks(data)
       // }
-      setTasks([]) // Empty for now
+      setTasks([]); // Empty for now
     } catch (error) {
-      console.error("Failed to fetch tasks:", error)
+      console.error("Failed to fetch tasks:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  }, [ritualId]);
+
+  useEffect(() => {
+    if (!ritualId) return;
+    fetchRitual();
+    fetchTasks();
+  }, [ritualId, fetchRitual, fetchTasks]);
 
   const getTasksByStatus = (status: string) => {
-    return tasks.filter((task) => task.status === status)
-  }
+    return tasks.filter((task) => task.status === status);
+  };
 
   if (loading || !ritual) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-white/40">Channeling the ritual...</div>
       </div>
-    )
+    );
   }
 
   return (
@@ -158,7 +158,7 @@ export default function RitualBoardPage({
       {/* Board Columns */}
       <div className="grid grid-cols-6 gap-4 overflow-x-auto">
         {COLUMNS.map((column) => {
-          const columnTasks = getTasksByStatus(column.id)
+          const columnTasks = getTasksByStatus(column.id);
 
           return (
             <div
@@ -211,9 +211,9 @@ export default function RitualBoardPage({
                 )}
               </div>
             </div>
-          )
+          );
         })}
       </div>
     </div>
-  )
+  );
 }
