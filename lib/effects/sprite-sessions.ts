@@ -1,6 +1,6 @@
 import { Effect } from "effect"
-import { eq } from "drizzle-orm"
-import { db } from "@/lib/db/client"
+import { eq, desc } from "drizzle-orm"
+import { DrizzleService } from "@/lib/db/drizzle-layer"
 import {
   spriteSessions,
   type SpriteSession,
@@ -8,81 +8,74 @@ import {
   type SessionStatus,
 } from "@/schemas"
 import {
-  DatabaseQueryError,
   RecordNotFoundError,
   type DatabaseError,
 } from "@/lib/db/errors"
 
 /**
  * Get session by ID.
+ * 
+ * Drizzle queries return Effect automatically when using @effect/sql-drizzle.
  */
-export const getSessionById = (
-  id: string
-): Effect.Effect<SpriteSession, DatabaseError, never> =>
-  Effect.tryPromise({
-    try: () =>
-      db.query.spriteSessions.findFirst({ where: eq(spriteSessions.id, id) }),
-    catch: (error) =>
-      new DatabaseQueryError({
-        message: "Failed to fetch session",
-        cause: error,
-      }),
-  }).pipe(
-    Effect.flatMap((session) =>
-      session
-        ? Effect.succeed(session)
-        : Effect.fail(
-            new RecordNotFoundError({
-              message: `Session not found with id: ${id}`,
-              table: "sprite_sessions",
-              id,
-            })
-          )
-    )
-  )
+export const getSessionById = (id: string) =>
+  Effect.gen(function* () {
+    const db = yield* DrizzleService
+
+    const session = yield* db.query.spriteSessions.findFirst({
+      where: eq(spriteSessions.id, id),
+    })
+
+    if (!session) {
+      return yield* Effect.fail(
+        new RecordNotFoundError({
+          message: `Session not found with id: ${id}`,
+          table: "sprite_sessions",
+          id,
+        })
+      )
+    }
+
+    return session
+  })
 
 /**
  * List all sessions for a task.
+ * 
+ * Drizzle queries return Effect automatically when using @effect/sql-drizzle.
  */
-export const listSessionsByTaskId = (
-  taskId: string
-): Effect.Effect<SpriteSession[], DatabaseError, never> =>
-  Effect.tryPromise({
-    try: () =>
-      db.query.spriteSessions.findMany({
-        where: eq(spriteSessions.taskId, taskId),
-        orderBy: (spriteSessions, { desc }) => [desc(spriteSessions.createdAt)],
-      }),
-    catch: (error) =>
-      new DatabaseQueryError({
-        message: "Failed to list sessions",
-        cause: error,
-      }),
+export const listSessionsByTaskId = (taskId: string) =>
+  Effect.gen(function* () {
+    const db = yield* DrizzleService
+
+    const sessionList = yield* db.query.spriteSessions.findMany({
+      where: eq(spriteSessions.taskId, taskId),
+      orderBy: desc(spriteSessions.createdAt),
+    })
+
+    return sessionList
   })
 
 /**
  * Create new session.
+ * 
+ * Drizzle queries return Effect automatically when using @effect/sql-drizzle.
  */
-export const createSession = (
-  data: NewSpriteSession
-): Effect.Effect<SpriteSession, DatabaseError, never> =>
-  Effect.tryPromise({
-    try: async () => {
-      const [session] = await db
-        .insert(spriteSessions)
-        .values(data)
-        .returning()
-      return session
-    },
-    catch: (error) =>
-      new DatabaseQueryError({
-        message: "Failed to create session",
-        cause: error,
-      }),
+export const createSession = (data: NewSpriteSession) =>
+  Effect.gen(function* () {
+    const db = yield* DrizzleService
+
+    const [session] = yield* db
+      .insert(spriteSessions)
+      .values(data)
+      .returning()
+
+    return session
   })
 
 /**
  * Update session status.
+ * 
+ * Drizzle queries return Effect automatically when using @effect/sql-drizzle.
  */
 export const updateSessionStatus = (
   id: string,
@@ -92,37 +85,31 @@ export const updateSessionStatus = (
     errorMessage?: string
     logs?: string
   }
-): Effect.Effect<SpriteSession, DatabaseError, never> =>
-  Effect.tryPromise({
-    try: async () => {
-      const [session] = await db
-        .update(spriteSessions)
-        .set({
-          status,
-          ...data,
-          updatedAt: new Date(),
-          completedAt:
-            status === "completed" || status === "error" ? new Date() : undefined,
+) =>
+  Effect.gen(function* () {
+    const db = yield* DrizzleService
+
+    const [session] = yield* db
+      .update(spriteSessions)
+      .set({
+        status,
+        ...data,
+        updatedAt: new Date(),
+        completedAt:
+          status === "completed" || status === "error" ? new Date() : undefined,
+      })
+      .where(eq(spriteSessions.id, id))
+      .returning()
+
+    if (!session) {
+      return yield* Effect.fail(
+        new RecordNotFoundError({
+          message: `Session not found with id: ${id}`,
+          table: "sprite_sessions",
+          id,
         })
-        .where(eq(spriteSessions.id, id))
-        .returning()
-      return session
-    },
-    catch: (error) =>
-      new DatabaseQueryError({
-        message: "Failed to update session status",
-        cause: error,
-      }),
-  }).pipe(
-    Effect.flatMap((session) =>
-      session
-        ? Effect.succeed(session)
-        : Effect.fail(
-            new RecordNotFoundError({
-              message: `Session not found with id: ${id}`,
-              table: "sprite_sessions",
-              id,
-            })
-          )
-    )
-  )
+      )
+    }
+
+    return session
+  })
