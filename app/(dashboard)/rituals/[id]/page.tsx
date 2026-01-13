@@ -67,21 +67,28 @@ const COLUMNS = [
 export default function RitualBoardPage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
   const router = useRouter()
+  const [ritualId, setRitualId] = useState<string | null>(null)
   const [ritual, setRitual] = useState<Ritual | null>(null)
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    params.then((p) => setRitualId(p.id))
+  }, [params])
+
+  useEffect(() => {
+    if (!ritualId) return
     fetchRitual()
     fetchTasks()
-  }, [params.id])
+  }, [ritualId])
 
   const fetchRitual = async () => {
+    if (!ritualId) return
     try {
-      const response = await fetch(`/api/rituals/${params.id}`)
+      const response = await fetch(`/api/rituals/${ritualId}`)
       if (response.ok) {
         const data = await response.json()
         setRitual(data)
@@ -94,9 +101,10 @@ export default function RitualBoardPage({
   }
 
   const fetchTasks = async () => {
+    if (!ritualId) return
     try {
       // TODO: Implement tasks API endpoint
-      // const response = await fetch(`/api/rituals/${params.id}/tasks`)
+      // const response = await fetch(`/api/rituals/${ritualId}/tasks`)
       // if (response.ok) {
       //   const data = await response.json()
       //   setTasks(data)
