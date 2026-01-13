@@ -348,14 +348,14 @@ Write tests for:
 /app
   /(auth)              # Auth routes (magic link)
   /(dashboard)         # Main app routes
-    /projects          # Project list
-    /projects/[id]     # Project board view
+    /page.tsx          # Rituals list (main dashboard)
+    /rituals/[id]      # Ritual board view
   /api                 # API routes
 /components
   /ui                  # shadcn components
   /board               # Board-specific components
   /tasks               # Task card components
-  /projects            # Project components
+  /rituals             # Ritual components
 /lib
   /db                  # Database client
   /effects             # Effect-based services

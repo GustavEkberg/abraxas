@@ -1,29 +1,29 @@
-"use client"
+"use client";
 
-import { useRouter } from "next/navigation"
-import { signOut } from "@/lib/auth-client"
+import { useRouter } from "next/navigation";
+import { signOut } from "@/lib/auth-client";
 
 /**
- * Projects list page (placeholder).
- * This will be the main dashboard.
+ * Rituals list page (main dashboard).
+ * Displays all rituals (projects) for the authenticated user.
  */
-export default function ProjectsPage() {
-  const router = useRouter()
+export default function RitualsPage() {
+  const router = useRouter();
 
   const handleSignOut = async () => {
-    await signOut()
-    router.push("/login")
-    router.refresh()
-  }
+    await signOut();
+    router.push("/login");
+    router.refresh();
+  };
 
   return (
-    <div className="min-h-screen bg-black p-8">
+    <div className="min-h-screen p-8">
       <div className="mx-auto max-w-7xl">
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-white/90">Projects</h1>
+            <h1 className="text-3xl font-bold text-white/90">Rituals</h1>
             <p className="mt-2 text-white/60">
-              Your mystical project boards
+              Your unholy rituals await
             </p>
           </div>
           <button
@@ -35,9 +35,9 @@ export default function ProjectsPage() {
         </div>
 
         <div className="rounded-lg border border-white/10 bg-zinc-950 p-12 text-center">
-          <p className="text-white/60">No projects yet. Create your first project to begin.</p>
+          <p className="text-white/60">No rituals exist yet. The void awaits.</p>
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -35,7 +35,7 @@ export default function VerifyPage() {
 
         // Redirect to dashboard after successful verification
         setTimeout(() => {
-          router.push("/projects")
+          router.push("/")
         }, 2000)
       } catch (error) {
         setStatus("error")
