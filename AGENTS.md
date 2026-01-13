@@ -120,6 +120,7 @@ export function TaskCard({ task }: { task: Task }) {
 ## Domain Model
 
 ### Projects
+- A project should be called a "Ritual" in the UI
 - Multiple isolated projects, each with its own board
 - Each project connects to a single repository
 - Project configuration includes:

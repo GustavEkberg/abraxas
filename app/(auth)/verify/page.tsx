@@ -50,12 +50,12 @@ export default function VerifyPage() {
 
   if (status === "verifying") {
     return (
-      <div className="rounded-lg border border-white/10 bg-zinc-950 p-8 text-center">
+      <div className="rounded-lg border border-border bg-card p-8 text-center">
         <div className="mb-4 text-4xl">🔮</div>
-        <h1 className="mb-4 text-2xl font-semibold text-white/90">
+        <h1 className="mb-4 text-2xl font-semibold text-foreground">
           Verifying...
         </h1>
-        <p className="text-white/60">
+        <p className="text-muted-foreground">
           Summoning your session from the abyss
         </p>
       </div>
@@ -64,12 +64,12 @@ export default function VerifyPage() {
 
   if (status === "success") {
     return (
-      <div className="rounded-lg border border-white/10 bg-zinc-950 p-8 text-center">
+      <div className="rounded-lg border border-border bg-card p-8 text-center">
         <div className="mb-4 text-4xl">✨</div>
-        <h1 className="mb-4 text-2xl font-semibold text-white/90">
+        <h1 className="mb-4 text-2xl font-semibold text-foreground">
           Welcome to Abraxas
         </h1>
-        <p className="text-white/60">
+        <p className="text-muted-foreground">
           Redirecting you to the realm...
         </p>
       </div>
@@ -77,15 +77,15 @@ export default function VerifyPage() {
   }
 
   return (
-    <div className="rounded-lg border border-red-500/20 bg-zinc-950 p-8 text-center">
+    <div className="rounded-lg border border-destructive/20 bg-card p-8 text-center">
       <div className="mb-4 text-4xl">⚠️</div>
-      <h1 className="mb-4 text-2xl font-semibold text-white/90">
+      <h1 className="mb-4 text-2xl font-semibold text-foreground">
         Verification Failed
       </h1>
-      <p className="mb-6 text-white/60">{errorMessage}</p>
+      <p className="mb-6 text-muted-foreground">{errorMessage}</p>
       <button
         onClick={() => router.push("/login")}
-        className="rounded-md bg-purple-600 px-6 py-3 font-medium text-white transition-all hover:bg-purple-500 active:scale-95"
+        className="rounded-md bg-primary px-6 py-3 font-medium text-primary-foreground transition-all hover:bg-primary/90 active:scale-95"
       >
         Back to login
       </button>
