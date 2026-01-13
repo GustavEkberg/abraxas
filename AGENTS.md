@@ -146,7 +146,7 @@ Tasks flow through these thematic columns:
 
 1. **The Abyss** - Backlog of tasks waiting in darkness
 2. **The Altar** - Tasks prepared and ready for execution
-3. **The Ritual** - Active execution (triggers OpenCode/Sprite session)
+3. **The Summoning** - Active execution (triggers OpenCode/Sprite session)
 4. **Cursed** - Blocked tasks with errors
 5. **The Trial** - Completed tasks awaiting human review
 6. **Vanquished** - Successfully completed and approved tasks
