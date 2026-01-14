@@ -97,15 +97,17 @@ export default function RitualBoardPage({
   const fetchInvocations = useCallback(async () => {
     if (!ritualId) return;
     try {
-      // TODO: Implement tasks API endpoint
-      // const response = await fetch(`/api/rituals/${ritualId}/tasks`)
-      // if (response.ok) {
-      //   const data = await response.json()
-      //   setInvocations(data)
-      // }
-      setInvocations([]); // Empty for now
+      const response = await fetch(`/api/rituals/${ritualId}/tasks`);
+      if (response.ok) {
+        const data = await response.json();
+        setInvocations(data);
+      } else {
+        console.error("Failed to fetch invocations:", response.statusText);
+        setInvocations([]);
+      }
     } catch (error) {
       console.error("Failed to fetch invocations:", error);
+      setInvocations([]);
     } finally {
       setLoading(false);
     }
