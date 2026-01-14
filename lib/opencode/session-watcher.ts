@@ -44,6 +44,11 @@ export function startSessionWatcher(
 
       // Track if we've already posted a question comment
       const postedQuestions = new Set<string>();
+      
+      // Track stats for periodic updates
+      let lastMessageCount = 0;
+      let lastInputTokens = 0;
+      let lastOutputTokens = 0;
 
       const result = await monitorSession(
         opencodeSessionId,
@@ -126,10 +131,27 @@ export function isSessionWatched(sessionId: string): boolean {
 async function handleSessionCompletion(
   taskId: string,
   sessionId: string,
-  result: { success: boolean; summary?: string; error?: string; }
+  result: { 
+    success: boolean; 
+    summary?: string; 
+    error?: string;
+    messageCount?: number;
+    inputTokens?: number;
+    outputTokens?: number;
+  }
 ): Promise<void> {
   const program = Effect.gen(function* () {
     if (result.success) {
+      // Update session stats if available
+      if (result.messageCount !== undefined && result.inputTokens !== undefined && result.outputTokens !== undefined) {
+        yield* OpencodeSessions.updateSessionStats(
+          sessionId,
+          result.messageCount,
+          result.inputTokens,
+          result.outputTokens
+        );
+      }
+
       // Success path: move to trial, mark completed
       yield* OpencodeSessions.completeSession(sessionId);
       yield* Tasks.updateTask(taskId, {
@@ -137,8 +159,11 @@ async function handleSessionCompletion(
         executionState: "awaiting_review",
       });
 
-      // Post success comment
-      const commentText = `✓ Invocation execution completed successfully.\n\n${result.summary || "Task finished."}`;
+      // Post success comment with stats
+      let commentText = `✓ Invocation execution completed successfully.\n\n${result.summary || "Task finished."}`;
+      if (result.messageCount !== undefined) {
+        commentText += `\n\n**Stats:** ${result.messageCount} messages, ${result.inputTokens || 0} input tokens, ${result.outputTokens || 0} output tokens`;
+      }
       yield* Comments.createAgentComment(taskId, commentText, "Abraxas");
     } else {
       // Error path: move to cursed, mark error

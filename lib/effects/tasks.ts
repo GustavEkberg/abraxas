@@ -3,6 +3,7 @@ import { eq, and, desc } from "drizzle-orm";
 import { DrizzleService } from "@/lib/db/drizzle-layer";
 import {
   tasks,
+  opencodeSessions,
   type NewTask,
   type TaskStatus,
   type TaskExecutionState,
@@ -52,6 +53,55 @@ export const listTasksByProjectId = (projectId: string) =>
     });
 
     return taskList;
+  });
+
+/**
+ * List all tasks for a project with their active session stats.
+ * 
+ * Returns tasks with messageCount, inputTokens, and outputTokens from the most recent in_progress session.
+ */
+export const listTasksWithStats = (projectId: string) =>
+  Effect.gen(function* () {
+    const db = yield* DrizzleService;
+
+    // Get all tasks
+    const taskList = yield* db.query.tasks.findMany({
+      where: eq(tasks.projectId, projectId),
+      orderBy: desc(tasks.createdAt),
+    });
+
+    // Get all in_progress sessions for these tasks
+    const taskIds = taskList.map((t) => t.id);
+    const sessions = yield* db.query.opencodeSessions.findMany({
+      where: and(
+        eq(opencodeSessions.status, "in_progress"),
+        // Filter by task IDs - we'll do this in memory since Drizzle doesn't have a clean "in" operator in relational queries
+      ),
+      orderBy: desc(opencodeSessions.createdAt),
+    });
+
+    // Create a map of taskId -> session stats
+    const sessionMap = new Map<string, { messageCount: number; inputTokens: number; outputTokens: number }>();
+    for (const session of sessions) {
+      if (taskIds.includes(session.taskId)) {
+        sessionMap.set(session.taskId, {
+          messageCount: session.messageCount || 0,
+          inputTokens: session.inputTokens || 0,
+          outputTokens: session.outputTokens || 0,
+        });
+      }
+    }
+
+    // Transform to include stats at the top level
+    return taskList.map((task) => {
+      const stats = sessionMap.get(task.id);
+      return {
+        ...task,
+        messageCount: stats?.messageCount || 0,
+        inputTokens: stats?.inputTokens || 0,
+        outputTokens: stats?.outputTokens || 0,
+      };
+    });
   });
 
 /**

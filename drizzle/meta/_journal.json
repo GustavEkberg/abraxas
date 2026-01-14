@@ -15,6 +15,13 @@
       "when": 1768418011796,
       "tag": "0001_purple_calypso",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1768418728435,
+      "tag": "0002_dizzy_sage",
+      "breakpoints": true
     }
   ]
 }

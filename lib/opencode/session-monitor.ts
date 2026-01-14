@@ -7,6 +7,9 @@ export interface SessionCompletionResult {
   success: boolean;
   summary?: string;
   error?: string;
+  messageCount?: number;
+  inputTokens?: number;
+  outputTokens?: number;
 }
 
 /**
@@ -62,6 +65,9 @@ export async function monitorSession(
       let lastMessageRole: "user" | "assistant" | undefined;
       let lastMessageText = "";
       let eventCount = 0;
+      let messageCount = 0;
+      let totalInputTokens = 0;
+      let totalOutputTokens = 0;
 
       for await (const event of stream.stream) {
         eventCount++;
@@ -107,6 +113,9 @@ export async function monitorSession(
                   return {
                     success: true,
                     summary: lastMessageText || "Task execution completed",
+                    messageCount,
+                    inputTokens: totalInputTokens,
+                    outputTokens: totalOutputTokens,
                   };
                 }
               } else if (status.type === "busy") {
@@ -135,6 +144,9 @@ export async function monitorSession(
               return {
                 success: true,
                 summary: lastMessageText || "Task execution completed",
+                messageCount,
+                inputTokens: totalInputTokens,
+                outputTokens: totalOutputTokens,
               };
             }
             break;
@@ -165,10 +177,26 @@ export async function monitorSession(
               typeof event.properties.info.id === "string" &&
               (event.properties.info.role === "user" || event.properties.info.role === "assistant")
             ) {
-              const messageInfo = event.properties.info as { id: string; role: "user" | "assistant"; sessionID: string };
+              const messageInfo = event.properties.info as { 
+                id: string; 
+                role: "user" | "assistant"; 
+                sessionID: string;
+                tokens?: { input: number; output: number; };
+              };
               hasMessages = true;
               lastMessageRole = messageInfo.role;
+              messageCount++;
               console.log(`[session-monitor] Message updated for session ${sessionId}: role=${messageInfo.role}, messageId=${messageInfo.id}`);
+
+              // Collect token stats from assistant messages
+              if (messageInfo.role === "assistant" && "tokens" in event.properties.info) {
+                const tokens = (event.properties.info as { tokens?: { input: number; output: number; } }).tokens;
+                if (tokens) {
+                  totalInputTokens += tokens.input || 0;
+                  totalOutputTokens += tokens.output || 0;
+                  console.log(`[session-monitor] Tokens: input=${tokens.input}, output=${tokens.output}, total: input=${totalInputTokens}, output=${totalOutputTokens}`);
+                }
+              }
 
               // Fetch the full message to get text content
               try {

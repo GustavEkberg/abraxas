@@ -144,6 +144,21 @@ export const errorSession = (id: string, errorMessage: string) =>
   });
 
 /**
+ * Update session statistics (message count and token usage).
+ */
+export const updateSessionStats = (
+  id: string,
+  messageCount: number,
+  inputTokens: number,
+  outputTokens: number
+) =>
+  updateSession(id, {
+    messageCount,
+    inputTokens,
+    outputTokens,
+  });
+
+/**
  * Delete OpenCode session.
  */
 export const deleteSession = (id: string) =>

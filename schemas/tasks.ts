@@ -1,5 +1,7 @@
 import { pgTable, text, timestamp, uuid, pgEnum } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import { projects } from "./projects";
+import { opencodeSessions } from "./opencode-sessions";
 
 /**
  * Task status represents which mystical column the task is in.
@@ -61,6 +63,10 @@ export const tasks = pgTable("tasks", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
+
+export const tasksRelations = relations(tasks, ({ many }) => ({
+  opencodeSessions: many(opencodeSessions),
+}));
 
 export type Task = typeof tasks.$inferSelect;
 export type NewTask = typeof tasks.$inferInsert;

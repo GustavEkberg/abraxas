@@ -33,6 +33,9 @@ interface Invocation {
   executionState: string;
   model: string;
   createdAt: Date;
+  messageCount?: number;
+  inputTokens?: number;
+  outputTokens?: number;
 }
 
 const COLUMNS = [
@@ -129,6 +132,7 @@ function DraggableCard({
   const isExecuting = invocation.executionState === "in_progress";
   const isError = invocation.executionState === "error";
   const isCompleted = invocation.executionState === "completed";
+  console.log(invocation);
 
   const borderColor = isExecuting
     ? "border-cyan-500/40 border-dashed"
@@ -179,6 +183,11 @@ function DraggableCard({
         <span className="rounded bg-white/5 px-1.5 py-0.5">
           {invocation.model}
         </span>
+        {invocation.messageCount !== undefined && invocation.messageCount > 0 && (
+          <span className="rounded bg-cyan-500/10 px-1.5 py-0.5 text-cyan-400">
+            {invocation.messageCount}m · {Math.round((invocation.inputTokens || 0) / 1000)}k/{Math.round((invocation.outputTokens || 0) / 1000)}k
+          </span>
+        )}
       </div>
     </Card>
   );
@@ -194,7 +203,7 @@ export default function RitualBoardPage({
   params: Promise<{ id: string; }>;
 }) {
   const router = useRouter();
-  const { addRunningTask, removeRunningTask } = useFireIntensity();
+  const { addRunningTask, removeRunningTask, updateTaskMessages } = useFireIntensity();
   const [ritualId, setRitualId] = useState<string | null>(null);
   const [ritual, setRitual] = useState<Ritual | null>(null);
   const [invocations, setInvocations] = useState<Invocation[]>([]);
@@ -264,9 +273,16 @@ export default function RitualBoardPage({
       (inv) => inv.executionState === "in_progress"
     );
 
-    // Add any new running tasks to fire intensity
+    // Add any new running tasks to fire intensity with message count
     runningInvocations.forEach((inv) => {
-      addRunningTask(inv.id);
+      addRunningTask(inv.id, inv.messageCount);
+    });
+
+    // Update message counts for existing running tasks
+    runningInvocations.forEach((inv) => {
+      if (inv.messageCount !== undefined) {
+        updateTaskMessages(inv.id, inv.messageCount);
+      }
     });
 
     // Remove completed tasks from fire intensity
@@ -275,7 +291,7 @@ export default function RitualBoardPage({
       .forEach((inv) => {
         removeRunningTask(inv.id);
       });
-  }, [invocations, addRunningTask, removeRunningTask]);
+  }, [invocations, addRunningTask, removeRunningTask, updateTaskMessages]);
 
   // Poll for running task status updates
   useEffect(() => {

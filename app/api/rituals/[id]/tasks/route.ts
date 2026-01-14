@@ -30,8 +30,8 @@ export async function GET(
       );
     }
 
-    // Fetch all invocations for this ritual
-    const invocations = yield* Tasks.listTasksByProjectId(id);
+    // Fetch all invocations for this ritual with session stats
+    const invocations = yield* Tasks.listTasksWithStats(id);
     return invocations;
   });
 
