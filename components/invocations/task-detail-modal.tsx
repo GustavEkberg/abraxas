@@ -27,6 +27,9 @@ interface Task {
   executionState: string;
   model: string;
   createdAt: Date;
+  messageCount?: number;
+  inputTokens?: number;
+  outputTokens?: number;
 }
 
 interface Comment {
@@ -315,6 +318,23 @@ export function TaskDetailModal({
               </SelectContent>
             </Select>
           </div>
+
+          {/* Session stats */}
+          {((task.messageCount !== undefined && task.messageCount > 0) ||
+            (task.inputTokens !== undefined && task.inputTokens > 0) ||
+            (task.outputTokens !== undefined && task.outputTokens > 0)) && (
+            <div className="mb-6 flex items-center gap-4">
+              <span className="text-sm text-white/60">Session Stats:</span>
+              <span className="rounded bg-cyan-500/10 px-3 py-1 text-cyan-400 text-sm">
+                {task.messageCount || 0} messages
+              </span>
+              {(task.inputTokens !== undefined && task.outputTokens !== undefined) && (
+                <span className="rounded bg-cyan-500/10 px-3 py-1 text-cyan-400 text-sm">
+                  {Math.round((task.inputTokens || 0) / 1000)}k input / {Math.round((task.outputTokens || 0) / 1000)}k output tokens
+                </span>
+              )}
+            </div>
+          )}
 
           {/* Description */}
           <div className="mb-8">

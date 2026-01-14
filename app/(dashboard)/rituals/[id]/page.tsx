@@ -183,11 +183,13 @@ function DraggableCard({
         <span className="rounded bg-white/5 px-1.5 py-0.5">
           {invocation.model}
         </span>
-        {invocation.messageCount !== undefined && invocation.messageCount > 0 && (
+        {(invocation.messageCount !== undefined && invocation.messageCount > 0) ||
+         (invocation.inputTokens !== undefined && invocation.inputTokens > 0) ||
+         (invocation.outputTokens !== undefined && invocation.outputTokens > 0) ? (
           <span className="rounded bg-cyan-500/10 px-1.5 py-0.5 text-cyan-400">
-            {invocation.messageCount}m · {Math.round((invocation.inputTokens || 0) / 1000)}k/{Math.round((invocation.outputTokens || 0) / 1000)}k
+            {invocation.messageCount || 0}m · {Math.round((invocation.inputTokens || 0) / 1000)}k/{Math.round((invocation.outputTokens || 0) / 1000)}k
           </span>
-        )}
+        ) : null}
       </div>
     </Card>
   );
@@ -267,6 +269,16 @@ export default function RitualBoardPage({
     fetchInvocations();
   }, [ritualId, fetchRitual, fetchInvocations]);
 
+  // Update selectedTask when invocations list changes
+  useEffect(() => {
+    if (selectedTask) {
+      const updatedTask = invocations.find(inv => inv.id === selectedTask.id);
+      if (updatedTask && JSON.stringify(updatedTask) !== JSON.stringify(selectedTask)) {
+        setSelectedTask(updatedTask);
+      }
+    }
+  }, [invocations, selectedTask]);
+
   // Sync running tasks with fire intensity context
   useEffect(() => {
     const runningInvocations = invocations.filter(
@@ -305,18 +317,23 @@ export default function RitualBoardPage({
 
     // Poll every 10 seconds for status updates
     const pollInterval = setInterval(async () => {
+      let needsRefresh = false;
       for (const inv of runningInvocations) {
         try {
           const response = await fetch(
             `/api/rituals/${ritualId}/tasks/${inv.id}/status`
           );
           if (response.ok) {
-            // Refresh invocations to get updated status
-            await fetchInvocations();
+            needsRefresh = true;
           }
         } catch (error) {
           console.error("Failed to poll task status:", error);
         }
+      }
+
+      if (needsRefresh) {
+        // Refresh invocations to get updated status
+        await fetchInvocations();
       }
     }, 10000); // Poll every 10 seconds
 

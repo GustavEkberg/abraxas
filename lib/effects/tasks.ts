@@ -70,25 +70,28 @@ export const listTasksWithStats = (projectId: string) =>
       orderBy: desc(tasks.createdAt),
     });
 
-    // Get all in_progress sessions for these tasks
+    // Get all sessions (completed and in_progress) for these tasks
     const taskIds = taskList.map((t) => t.id);
     const sessions = yield* db.query.opencodeSessions.findMany({
       where: and(
-        eq(opencodeSessions.status, "in_progress"),
+        // Include both completed and in_progress sessions
         // Filter by task IDs - we'll do this in memory since Drizzle doesn't have a clean "in" operator in relational queries
       ),
       orderBy: desc(opencodeSessions.createdAt),
     });
 
-    // Create a map of taskId -> session stats
+    // Create a map of taskId -> session stats (most recent session wins)
     const sessionMap = new Map<string, { messageCount: number; inputTokens: number; outputTokens: number }>();
     for (const session of sessions) {
       if (taskIds.includes(session.taskId)) {
-        sessionMap.set(session.taskId, {
-          messageCount: session.messageCount || 0,
-          inputTokens: session.inputTokens || 0,
-          outputTokens: session.outputTokens || 0,
-        });
+        // Only set if we don't already have stats for this task (since we ordered by createdAt desc)
+        if (!sessionMap.has(session.taskId)) {
+          sessionMap.set(session.taskId, {
+            messageCount: session.messageCount || 0,
+            inputTokens: session.inputTokens || 0,
+            outputTokens: session.outputTokens || 0,
+          });
+        }
       }
     }
 
