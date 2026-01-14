@@ -321,44 +321,6 @@ When working on Abraxas:
 - If requirements are ambiguous
 - Before making breaking changes
 
-## Testing Strategy
-
-Write tests for:
-- Invocation creation, updates, deletion
-- Drag-and-drop state changes
-- Comment threads
-- Project configuration
-- Effect-based error handling paths
-- Sprite.dev integration (mock tests for v1)
-
-## MVP Scope
-
-### Must-Have for v1
-- Single-user auth with magic links
-- Create/manage multiple isolated projects
-- Connect project to repo path + GitHub PAT
-- Board view with all six mystical columns
-- Create invocation cards with all fields (title, description, optional metadata)
-- Drag-and-drop between columns
-- Comments on invocations (user and agent)
-- Stubbed Sprite.dev integration (mock execution flow)
-- Progress indicators on active invocations
-- Auto-move invocations based on execution state
-- Review flow: feedback via comments, send back to ritual
-- Dark mode occult UI
-- Mobile-friendly responsive design
-
-### Deferred to v2
-- Search/filter invocations
-- Archive completed invocations
-- Invocation dependencies
-- Real-time board updates (WebSockets)
-- Actual Sprite.dev API integration
-- Custom column configuration
-- Multi-user support
-- Keyboard shortcuts
-- Export data
-
 ## API Routes Pattern
 
 ### Authentication Helper
@@ -460,7 +422,6 @@ When working with agents on Abraxas:
 
 Users create invocations with **minimal metadata** (title + description only). This aligns with Ralph Wiggum methodology:
 
-- Agents don't need priority/labels/dates to work effectively
 - Simpler inputs = clearer context for agents
 - Backpressure from tests > prescriptive metadata
 - Focus on **what** needs done, not **how/when**

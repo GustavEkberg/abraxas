@@ -65,6 +65,9 @@ export async function POST(
       );
     }
 
+    // Update task execution state to in_progress
+    yield* Tasks.updateTask(taskId, { executionState: "in_progress" });
+
     // Get all comments for context
     const commentsList = yield* Comments.listCommentsByTaskId(taskId);
 
@@ -73,9 +76,6 @@ export async function POST(
       taskId,
       status: "pending",
     });
-
-    // Update task execution state to in_progress
-    yield* Tasks.updateTask(taskId, { executionState: "in_progress" });
 
     // Execute task with OpenCode (wrapped in tryPromise since it's not Effect-based yet)
     const opencodeSessionId = yield* Effect.tryPromise({
@@ -116,7 +116,6 @@ export async function POST(
         );
       },
     });
-    console.log("opencodeSessionId:", opencodeSessionId);
     // Update session with OpenCode session ID and set to in_progress
     yield* OpencodeSessions.updateSession(opencodeSession.id, {
       sessionId: opencodeSessionId,
@@ -127,7 +126,7 @@ export async function POST(
     // Add agent comment to indicate execution started
     yield* Comments.createAgentComment(
       taskId,
-      `Invocation execution started.\n\nOpenCode session: \`${opencodeSessionId}\`\n\nMonitor progress in your OpenCode interface.`,
+      `Invocation ritual started.\n\nOpenCode session: \`${opencodeSessionId}\`\n\nFollow the unholy process in OpenCode.`,
       "OpenCode Agent"
     );
 

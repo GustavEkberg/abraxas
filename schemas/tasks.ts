@@ -19,6 +19,7 @@ export const taskStatusEnum = pgEnum("task_status", [
 export const taskExecutionStateEnum = pgEnum("task_execution_state", [
   "idle",
   "in_progress",
+  "awaiting_review",
   "completed",
   "error",
 ]);
