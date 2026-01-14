@@ -44,11 +44,6 @@ export function startSessionWatcher(
 
       // Track if we've already posted a question comment
       const postedQuestions = new Set<string>();
-      
-      // Track stats for periodic updates
-      let lastMessageCount = 0;
-      let lastInputTokens = 0;
-      let lastOutputTokens = 0;
 
       const result = await monitorSession(
         opencodeSessionId,
