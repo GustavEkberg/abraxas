@@ -44,7 +44,7 @@ const COLUMNS = [
   {
     id: "altar",
     title: "The Altar",
-    description: "Prepared for execution",
+    description: "Prepared for demonic rituals",
     color: "border-purple-500/20",
   },
   {
@@ -62,13 +62,13 @@ const COLUMNS = [
   {
     id: "trial",
     title: "The Trial",
-    description: "Awaiting review",
+    description: "Awaiting Judgement",
     color: "border-yellow-500/20",
   },
   {
     id: "vanquished",
     title: "Vanquished",
-    description: "Successfully completed",
+    description: "Returned to the Void",
     color: "border-green-500/20",
   },
 ] as const;
@@ -90,9 +90,8 @@ function DroppableColumn({
   return (
     <div
       ref={setNodeRef}
-      className={`flex min-w-[280px] flex-col border border-dashed bg-zinc-950/50 p-4 transition-colors font-mono ${
-        isOver ? "border-purple-500/40 bg-zinc-900/50" : ""
-      }`}
+      className={`flex min-w-[280px] flex-col border border-dashed bg-zinc-950/50 p-4 transition-colors font-mono ${isOver ? "border-purple-500/40 bg-zinc-900/50" : ""
+        }`}
       style={{
         borderColor: isOver
           ? undefined
@@ -107,10 +106,10 @@ function DroppableColumn({
 /**
  * Draggable invocation card component.
  */
-function DraggableCard({ 
-  invocation, 
-  onClick 
-}: { 
+function DraggableCard({
+  invocation,
+  onClick
+}: {
   invocation: Invocation;
   onClick: (invocation: Invocation) => void;
 }) {
@@ -121,8 +120,8 @@ function DraggableCard({
 
   const style = transform
     ? {
-        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-      }
+      transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+    }
     : undefined;
 
   // Determine visual styling based on execution state
@@ -151,9 +150,8 @@ function DraggableCard({
       {...attributes}
       {...listeners}
       onClick={() => onClick(invocation)}
-      className={`cursor-grab p-4 transition-all duration-200 hover:border-white/30 hover:bg-zinc-800 font-mono ${borderColor} ${bgColor} ${
-        isDragging ? "opacity-50" : ""
-      }`}
+      className={`cursor-grab p-4 transition-all duration-200 hover:border-white/30 hover:bg-zinc-800 font-mono ${borderColor} ${bgColor} ${isDragging ? "opacity-50" : ""
+        }`}
     >
       <div className="mb-2 flex items-center justify-between">
         <h3 className="font-medium text-white/90">{invocation.title}</h3>
@@ -435,111 +433,111 @@ export default function RitualBoardPage({
       onDragEnd={handleDragEnd}
     >
       <div className="min-h-screen p-6">
-      {/* Header */}
-      <div className="mb-6">
-        <button
-          onClick={() => router.push("/")}
-          className="mb-4 text-sm text-white/60 transition-colors hover:text-white/90 font-mono"
-        >
-          ← Return to Chamber
-        </button>
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-white/90">{ritual.name}</h1>
-            {ritual.description && (
-              <p className="mt-2 text-white/60">{ritual.description}</p>
-            )}
-            <p className="mt-1 text-sm text-white/40">
-              {ritual.repositoryPath}
-            </p>
-          </div>
+        {/* Header */}
+        <div className="mb-6">
           <button
-            onClick={() => setShowCreateDialog(true)}
-            className="border border-dashed border-purple-500 bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-purple-700 active:scale-95 font-mono"
+            onClick={() => router.push("/")}
+            className="mb-4 text-sm text-white/60 transition-colors hover:text-white/90 font-mono"
           >
-            Invoke New Invocation
+            ← Return to Chamber
           </button>
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-white/90">{ritual.name}</h1>
+              {ritual.description && (
+                <p className="mt-2 text-white/60">{ritual.description}</p>
+              )}
+              <p className="mt-1 text-sm text-white/40">
+                {ritual.repositoryPath}
+              </p>
+            </div>
+            <button
+              onClick={() => setShowCreateDialog(true)}
+              className="border border-dashed border-purple-500 bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-purple-700 active:scale-95 font-mono"
+            >
+              Invoke New Invocation
+            </button>
+          </div>
         </div>
-      </div>
 
-      {/* Board Columns */}
-      <div className="grid grid-cols-6 gap-4 overflow-x-auto">
-        {COLUMNS.map((column) => {
-          const columnInvocations = getInvocationsByStatus(column.id);
+        {/* Board Columns */}
+        <div className="grid grid-cols-6 gap-4 overflow-x-auto">
+          {COLUMNS.map((column) => {
+            const columnInvocations = getInvocationsByStatus(column.id);
 
-          return (
-            <DroppableColumn key={column.id} id={column.id} color={column.color}>
-              {/* Column Header */}
-              <div className="mb-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-white/90">
-                    {column.title}
-                  </h2>
-                  <span className="border border-dashed border-white/20 bg-white/5 px-2 py-1 text-xs text-white/60 font-mono">
-                    {columnInvocations.length}
-                  </span>
-                </div>
-                <p className="mt-1 text-xs text-white/40">
-                  {column.description}
-                </p>
-              </div>
-
-              {/* Invocations */}
-              <div className="flex-1 space-y-3">
-                {columnInvocations.length === 0 ? (
-                  <div className="border border-dashed border-white/20 p-8 text-center text-sm text-white/30 font-mono">
-                    Empty
+            return (
+              <DroppableColumn key={column.id} id={column.id} color={column.color}>
+                {/* Column Header */}
+                <div className="mb-4">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-semibold text-white/90">
+                      {column.title}
+                    </h2>
+                    <span className="border border-dashed border-white/20 bg-white/5 px-2 py-1 text-xs text-white/60 font-mono">
+                      {columnInvocations.length}
+                    </span>
                   </div>
-                ) : (
-                  columnInvocations.map((invocation) => (
-                    <DraggableCard
-                      key={invocation.id}
-                      invocation={invocation}
-                      onClick={handleTaskClick}
-                    />
-                  ))
-                )}
-              </div>
-            </DroppableColumn>
-          );
-        })}
+                  <p className="mt-1 text-xs text-white/40">
+                    {column.description}
+                  </p>
+                </div>
+
+                {/* Invocations */}
+                <div className="flex-1 space-y-3">
+                  {columnInvocations.length === 0 ? (
+                    <div className="border border-dashed border-white/20 p-8 text-center text-sm text-white/30 font-mono">
+                      Empty
+                    </div>
+                  ) : (
+                    columnInvocations.map((invocation) => (
+                      <DraggableCard
+                        key={invocation.id}
+                        invocation={invocation}
+                        onClick={handleTaskClick}
+                      />
+                    ))
+                  )}
+                </div>
+              </DroppableColumn>
+            );
+          })}
+        </div>
+
+        {/* Create Invocation Dialog */}
+        {ritualId && (
+          <CreateInvocationDialog
+            ritualId={ritualId}
+            open={showCreateDialog}
+            onOpenChange={setShowCreateDialog}
+            onInvocationCreated={fetchInvocations}
+          />
+        )}
+
+        {/* Task Detail Modal */}
+        {ritualId && (
+          <TaskDetailModal
+            task={selectedTask}
+            ritualId={ritualId}
+            open={showTaskDetail}
+            onOpenChange={setShowTaskDetail}
+            onUpdate={fetchInvocations}
+          />
+        )}
       </div>
 
-      {/* Create Invocation Dialog */}
-      {ritualId && (
-        <CreateInvocationDialog
-          ritualId={ritualId}
-          open={showCreateDialog}
-          onOpenChange={setShowCreateDialog}
-          onInvocationCreated={fetchInvocations}
-        />
-      )}
-
-      {/* Task Detail Modal */}
-      {ritualId && (
-        <TaskDetailModal
-          task={selectedTask}
-          ritualId={ritualId}
-          open={showTaskDetail}
-          onOpenChange={setShowTaskDetail}
-          onUpdate={fetchInvocations}
-        />
-      )}
-    </div>
-
-    {/* Drag Overlay */}
-    <DragOverlay>
-      {activeInvocation ? (
-        <Card className="cursor-grabbing border-white/20 bg-zinc-900 p-4 opacity-80">
-          <h3 className="mb-2 font-medium text-white/90">
-            {activeInvocation.title}
-          </h3>
-          <p className="line-clamp-2 text-sm text-white/60">
-            {activeInvocation.description}
-          </p>
-        </Card>
-      ) : null}
-    </DragOverlay>
-  </DndContext>
+      {/* Drag Overlay */}
+      <DragOverlay>
+        {activeInvocation ? (
+          <Card className="cursor-grabbing border-white/20 bg-zinc-900 p-4 opacity-80">
+            <h3 className="mb-2 font-medium text-white/90">
+              {activeInvocation.title}
+            </h3>
+            <p className="line-clamp-2 text-sm text-white/60">
+              {activeInvocation.description}
+            </p>
+          </Card>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
   );
 }

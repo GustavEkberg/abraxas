@@ -9,7 +9,7 @@ export const taskStatusEnum = pgEnum("task_status", [
   "altar",      // The Altar - Ready for execution
   "ritual",     // The Ritual - Active execution
   "cursed",     // Cursed - Blocked/Error
-  "trial",      // The Trial - Awaiting review
+  "trial",      // The Trial - Awaiting Judgement
   "vanquished", // Vanquished - Completed
 ]);
 

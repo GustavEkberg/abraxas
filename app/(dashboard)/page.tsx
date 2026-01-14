@@ -1,18 +1,18 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { signOut } from "@/lib/auth-client"
-import { CreateRitualDialog } from "@/components/rituals/create-ritual-dialog"
-import { Card } from "@/components/ui/card"
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { signOut } from "@/lib/auth-client";
+import { CreateRitualDialog } from "@/components/rituals/create-ritual-dialog";
+import { Card } from "@/components/ui/card";
 
 interface Ritual {
-  id: string
-  name: string
-  description: string | null
-  repositoryPath: string
-  createdAt: Date
-  updatedAt: Date
+  id: string;
+  name: string;
+  description: string | null;
+  repositoryPath: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 /**
@@ -20,33 +20,33 @@ interface Ritual {
  * Displays all rituals (projects) for the authenticated user.
  */
 export default function RitualsPage() {
-  const router = useRouter()
-  const [rituals, setRituals] = useState<Ritual[]>([])
-  const [loading, setLoading] = useState(true)
+  const router = useRouter();
+  const [rituals, setRituals] = useState<Ritual[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchRituals()
-  }, [])
+    fetchRituals();
+  }, []);
 
   const fetchRituals = async () => {
     try {
-      const response = await fetch("/api/rituals")
+      const response = await fetch("/api/rituals");
       if (response.ok) {
-        const data = await response.json()
-        setRituals(data)
+        const data = await response.json();
+        setRituals(data);
       }
     } catch (error) {
-      console.error("Failed to fetch rituals:", error)
+      console.error("Failed to fetch rituals:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleSignOut = async () => {
-    await signOut()
-    router.push("/login")
-    router.refresh()
-  }
+    await signOut();
+    router.push("/login");
+    router.refresh();
+  };
 
   return (
     <div className="min-h-screen p-8">
@@ -96,7 +96,7 @@ export default function RitualsPage() {
             {rituals.map((ritual) => (
               <Card
                 key={ritual.id}
-                className="group cursor-pointer border-dashed border-white/20 bg-zinc-950 p-6 transition-all duration-200 hover:border-purple-500/30 hover:bg-zinc-900 font-mono"
+                className="flex justify-between group cursor-pointer border-dashed border-white/20 bg-zinc-950 p-6 transition-all duration-200 hover:border-purple-500/30 hover:bg-zinc-900 font-mono"
                 onClick={() => router.push(`/rituals/${ritual.id}`)}
               >
                 <h3 className="mb-2 text-xl font-semibold text-white/90 transition-colors group-hover:text-purple-400">
@@ -121,5 +121,5 @@ export default function RitualsPage() {
         )}
       </div>
     </div>
-  )
+  );
 }
