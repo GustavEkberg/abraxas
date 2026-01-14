@@ -3,10 +3,11 @@ import type { NextRequest } from "next/server"
 import { auth } from "@/lib/auth"
 
 /**
- * Middleware for protected routes.
+ * Proxy for protected routes.
  * Redirects unauthenticated users to login page.
+ * Automatically logs out users if session is invalid.
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const session = await auth.api.getSession({
     headers: request.headers,
   })
@@ -19,9 +20,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/", request.url))
   }
 
-  // Redirect unauthenticated users to login
+  // Redirect unauthenticated users to login and clear cookies
   if (!session && !isAuthPage) {
-    return NextResponse.redirect(new URL("/login", request.url))
+    const response = NextResponse.redirect(new URL("/login", request.url))
+    // Clear auth cookies to ensure clean logout
+    response.cookies.delete("better-auth.session_token")
+    response.cookies.delete("better-auth.session_data")
+    return response
   }
 
   return NextResponse.next()

@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
+import { Effect } from "effect"
 import { auth } from "@/lib/auth"
+import { getUserById } from "@/lib/effects/users"
+import { DrizzleLive } from "@/lib/db/drizzle-layer"
+import { RecordNotFoundError } from "@/lib/db/errors"
 
 /**
  * Authenticated user session.
@@ -15,6 +19,7 @@ export interface AuthSession {
 
 /**
  * Get authenticated session or return unauthorized response.
+ * Automatically logs out users if session is invalid or user doesn't exist in database.
  * 
  * @example
  * ```typescript
@@ -35,10 +40,44 @@ export async function requireAuth(
     headers: request.headers,
   })
 
+  // No session or missing user data
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    const response = NextResponse.json(
+      { error: "Unauthorized" }, 
+      { status: 401 }
+    )
+    // Clear auth cookies to force logout
+    response.cookies.delete("better-auth.session_token")
+    response.cookies.delete("better-auth.session_data")
+    return response
   }
 
+  // Verify user still exists in database using Effect
+  const userProgram = getUserById(session.user.id).pipe(
+    Effect.catchTag("RecordNotFoundError", () =>
+      Effect.succeed(null as null)
+    ),
+    Effect.catchAll((error) => {
+      console.error("Error verifying user in requireAuth:", error)
+      return Effect.succeed(null as null)
+    }),
+    Effect.provide(DrizzleLive)
+  )
+
+  const user = await Effect.runPromise(userProgram)
+
+  if (!user) {
+    // User no longer exists or database error - clear session and return 401
+    const response = NextResponse.json(
+      { error: "Unauthorized" }, 
+      { status: 401 }
+    )
+    response.cookies.delete("better-auth.session_token")
+    response.cookies.delete("better-auth.session_data")
+    return response
+  }
+
+  // User exists - return session
   return {
     userId: session.user.id,
     user: {
