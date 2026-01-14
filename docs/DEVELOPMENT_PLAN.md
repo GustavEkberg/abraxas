@@ -6,7 +6,7 @@ This document outlines the technical architecture, implementation phases, and de
 
 **Phase:** Phase 1 Complete ✅ | Phase 2 In Progress 🔄
 
-**Last Updated:** January 13, 2026
+**Last Updated:** January 14, 2026
 
 ### Completed Features
 - ✅ Next.js 16.1 project with TypeScript and App Router
@@ -15,7 +15,9 @@ This document outlines the technical architecture, implementation phases, and de
 - ✅ Effect-based service layer for all database operations
 - ✅ Better Auth with magic link authentication
 - ✅ Session management (7-day sessions, 1-hour cache)
-- ✅ Middleware for route protection
+- ✅ Proxy for route protection (Next.js 16 convention)
+- ✅ Automatic logout on auth failures (session invalid, user not in DB)
+- ✅ Effect-based user verification in API routes
 - ✅ Tailwind CSS v4 with dark occult theme
 - ✅ shadcn/ui components installed (button, dialog, input, label, textarea, card)
 - ✅ ASCII fire background effect (grayscale, intensity-based)
@@ -321,6 +323,7 @@ export const getProjectById = (id: string): Effect.Effect<Project, DatabaseError
 3. Email sent with magic link (logged to console in dev)
 4. User clicks link → validates token → creates session
 5. Redirect to projects dashboard
+6. On auth failure → automatic logout with cookie clearing
 
 **Implementation:**
 - ✅ Better Auth library configured
@@ -330,6 +333,9 @@ export const getProjectById = (id: string): Effect.Effect<Project, DatabaseError
 - ✅ Session duration: 7 days
 - ✅ Cookie cache: 1 hour (prevents premature timeout)
 - ✅ Security: Only sends magic links to existing users
+- ✅ Automatic logout on session failure or user deletion
+- ✅ Effect-based user verification in `requireAuth` helper
+- ✅ Cookie clearing on all auth failures
 
 **Files:**
 ```
@@ -338,7 +344,8 @@ export const getProjectById = (id: string): Effect.Effect<Project, DatabaseError
 /app/(auth)/layout.tsx ✅
 /lib/auth.ts ✅
 /lib/auth-client.ts ✅
-/middleware.ts ✅
+/lib/api/auth.ts ✅ (Effect-based verification)
+/proxy.ts ✅ (Next.js 16 convention)
 ```
 
 **Database Tables (Better Auth):**
@@ -346,6 +353,13 @@ export const getProjectById = (id: string): Effect.Effect<Project, DatabaseError
 - `session` (text ID)
 - `account` (text ID)
 - `verification` (text ID)
+
+**Auth Error Handling:**
+- Proxy checks session validity (no DB queries for performance)
+- API routes verify user exists in database using Effect
+- All failures clear `better-auth.session_token` and `better-auth.session_data` cookies
+- 401 responses returned for invalid auth
+- Automatic redirect to `/login` on session failure
 
 ---
 

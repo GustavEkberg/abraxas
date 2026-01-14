@@ -293,6 +293,12 @@ When working on Abraxas:
 - Mark todos in_progress when starting
 - Complete todos immediately after finishing each step
 
+### Development Plan Updates
+- **ALWAYS update `docs/DEVELOPMENT_PLAN.md` after completing features**
+- Mark completed tasks with ✅ in the plan
+- Update "Current Status" and "Completed Features" sections
+- As always keep the documentation short and to the point
+
 ### Communication
 - Be concise and technical
 - Explain complex decisions briefly
