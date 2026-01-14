@@ -4,7 +4,7 @@ This document outlines the technical architecture, implementation phases, and de
 
 ## Current Status
 
-**Phase:** Phase 1-4 Complete ✅ | Phase 5 Next 🎯
+**Phase:** Phase 1-5 Complete ✅ | Phase 6 Next 🎯
 
 **Last Updated:** January 14, 2026
 
@@ -21,7 +21,7 @@ This document outlines the technical architecture, implementation phases, and de
 - ✅ Automatic logout on auth failures (session invalid, user not in DB)
 - ✅ Effect-based user verification in API routes
 - ✅ Tailwind CSS v4 with dark occult theme
-- ✅ shadcn/ui components installed (button, dialog, input, label, textarea, card)
+- ✅ shadcn/ui components installed (button, dialog, input, label, textarea, card, select)
 - ✅ ASCII fire background effect (grayscale, intensity-based)
 
 **Phase 2 - Project Management** ✅
@@ -33,7 +33,7 @@ This document outlines the technical architecture, implementation phases, and de
 
 **Phase 3 - Board View & Tasks** ✅
 - ✅ Kanban board with six mystical columns (The Abyss, The Altar, The Ritual, Cursed, The Trial, Vanquished)
-- ✅ Task creation dialog (title + description only, per Ralph Wiggum methodology)
+- ✅ Task creation dialog (title + description + optional model selection)
 - ✅ Task cards with draggable functionality
 - ✅ Drag-and-drop between columns (@dnd-kit)
 - ✅ Optimistic UI updates on drag
@@ -50,41 +50,52 @@ This document outlines the technical architecture, implementation phases, and de
 - ✅ User/agent attribution with timestamps
 - ✅ Effect-based comment service layer
 
-**Phase 5 - OpenCode SDK Integration** 🔄
+**Phase 5 - OpenCode SDK Integration** ✅ COMPLETE
 - ✅ Install @opencode-ai/sdk package
 - ✅ Create OpenCode client service (`lib/opencode/client.ts`)
 - ✅ Build task execution service (`lib/opencode/task-execution.ts`)
 - ✅ Create Abraxas agent configuration for OpenCode
 - ✅ Install agent to ~/.config/opencode/agent/
 - ✅ Document OpenCode integration setup and usage
-- ⬜ Rename `sprite_sessions` to `opencode_sessions` schema
-- ⬜ Create execution API route
-- ⬜ Update board UI to trigger execution on drag to Ritual
-- ⬜ Implement event stream monitoring
-- ⬜ Add progress indicators to UI
+- ✅ Rename `sprite_sessions` to `opencode_sessions` schema
+- ✅ Create execution API route (`POST /api/rituals/[id]/tasks/[taskId]/execute`)
+- ✅ Update board UI to trigger execution on drag to Ritual
+- ✅ Implement event stream monitoring (`lib/opencode/session-monitor.ts`)
+- ✅ Add progress indicators to UI (fire intensity based on running tasks)
+- ✅ Implement session completion handler with auto-comments
+- ✅ Implement status polling endpoint (`GET /api/rituals/[id]/tasks/[taskId]/status`)
+- ✅ Auto-move tasks to Trial/Cursed on completion/error
+- ✅ Post agent comments with execution results
 
 ### In Progress
-- 🔄 Phase 5 - OpenCode SDK Integration (foundation complete, wiring up UI next)
+- None - Phase 5 complete, ready for Phase 6
 
 ### Next Steps
-1. **Phase 5 - OpenCode SDK Integration** (current priority)
-   - Integrate @opencode-ai/sdk for local task execution
-   - Replace Sprite.dev mock with real OpenCode server
-   - Create session per task with title + description + comments as context
-   - Event stream for real-time progress tracking
-   - Auto-post agent comments on completion/error
-   - No GitHub PAT needed (works with local repos)
-   - OpenCode reads AGENTS.md from repository automatically
-   
-2. **Phase 6 - GitHub Integration** (deferred to v2)
-   - Feature branch creation
+1. **Phase 6 - GitHub Integration** (next priority)
+   - Feature branch creation via GitHub API
    - PR linking to tasks
-   - GitHub API integration
+   - GitHub API integration with Octokit
+   - Branch naming convention: `abraxas/task-{id}-{slugified-title}`
    
-3. **Deferred Items**
+2. **Phase 7 - Polish & Testing**
+   - Comprehensive E2E tests
+   - Performance optimization
+   - Mobile responsiveness verification
+   - UI refinements and animations
+   
+3. **Phase 8 - Deployment**
+   - Vercel project setup
+   - PostgreSQL hosting configuration
+   - Environment variables setup
+   - Production deployment
+   
+4. **Deferred Items (v2+)**
    - GitHub PAT encryption utilities
    - Repository path validation
-   - Comprehensive tests for all features
+   - Search/filter invocations
+   - Archive completed invocations
+   - Multi-user support
+   - Real-time board updates (WebSockets)
 
 ## Table of Contents
 
@@ -830,7 +841,7 @@ const createFeatureBranch = (task: Task, project: Project): Effect.Effect<string
 
 ---
 
-### Phase 5: OpenCode SDK Integration (Week 5) 🔄 IN PROGRESS
+### Phase 5: OpenCode SDK Integration (Week 5) ✅ COMPLETE
 
 **Goals:** Real AI-powered task execution via local OpenCode server
 
@@ -840,60 +851,71 @@ const createFeatureBranch = (task: Task, project: Project): Effect.Effect<string
 3. ✅ Build task execution service (`lib/opencode/task-execution.ts`)
 4. ✅ Create Abraxas agent configuration (`lib/opencode/abraxas-agent.md`)
 5. ✅ Document setup and prerequisites (`lib/opencode/README.md`)
-6. ⬜ Rename `sprite_sessions` to `opencode_sessions`
-7. ⬜ Create execution API route (`POST /api/rituals/[id]/tasks/[taskId]/execute`)
-8. ⬜ Update board UI for execution triggers
-9. ⬜ Implement event stream monitoring (`lib/opencode/events.ts`)
-10. ⬜ Add progress indicators and real-time updates
+6. ✅ Rename `sprite_sessions` to `opencode_sessions`
+7. ✅ Create execution API route (`POST /api/rituals/[id]/tasks/[taskId]/execute`)
+8. ✅ Update board UI for execution triggers
+9. ✅ Implement event stream monitoring (`lib/opencode/session-monitor.ts`)
+10. ✅ Add progress indicators and real-time updates
 
 **Deliverables:**
 - ✅ OpenCode SDK client initialized (connects to localhost:4096)
 - ✅ Task execution service with context passing (title + description + comments)
 - ✅ Abraxas agent installed to OpenCode
 - ✅ Documentation for setup and usage
-- ⬜ Full execution flow working (API + UI integration)
-- ⬜ Event stream for live progress
-- ⬜ Agent comments auto-posted on completion/error
+- ✅ Full execution flow working (API + UI integration)
+- ✅ Event stream for live progress (polling-based)
+- ✅ Agent comments auto-posted on completion/error
 
-**Implementation Plan:**
+**Implementation Complete:**
 
 **Architecture:**
 - User drags task to "The Ritual" → triggers OpenCode session
 - OpenCode reads AGENTS.md from project's `repositoryPath`
 - Task context (title + description + comments) sent as initial prompt
-- Event stream provides real-time updates
+- Polling-based status monitoring (10-second intervals)
 - On completion: auto-move to "The Trial", post agent comment with summary
 - On error: auto-move to "Cursed", post agent comment with error details
 
-**Key Files:**
+**Key Files Implemented:**
 - ✅ `lib/opencode/client.ts` - OpenCode SDK client configuration
 - ✅ `lib/opencode/task-execution.ts` - Execute tasks with full context
 - ✅ `lib/opencode/abraxas-agent.md` - Agent configuration for task execution
-- ✅ `lib/opencode/README.md` - Setup and usage documentation
-- ⬜ `lib/opencode/events.ts` - Monitor event stream for progress (TODO)
-- ⬜ `app/api/rituals/[id]/tasks/[taskId]/execute/route.ts` - Trigger execution (TODO)
-- ⬜ `schemas/opencode-sessions.ts` - Rename from sprite-sessions (TODO)
+- ✅ `lib/opencode/session-monitor.ts` - Poll session status and detect completion
+- ✅ `lib/opencode/completion-handler.ts` - Handle completion/error and post comments
+- ✅ `lib/opencode/health-check.ts` - Verify OpenCode server is running
+- ✅ `app/api/rituals/[id]/tasks/[taskId]/execute/route.ts` - Trigger execution
+- ✅ `app/api/rituals/[id]/tasks/[taskId]/status/route.ts` - Poll execution status
+- ✅ `schemas/opencode-sessions.ts` - Track execution sessions
 
 **Session Management:**
 - Create new OpenCode session per task execution (isolation)
 - Store session ID in `opencode_sessions` table
-- Track status: in_progress → completed/error
+- Track status: pending → in_progress → completed/error
 - Link to task for history tracking
+- Auto-update task status based on session completion
 
 **Context Passing:**
 - Initial prompt includes:
   - Task title (as summary)
   - Task description (as detailed requirements)
   - All comment history (for feedback context)
+  - Optional model selection (Claude 3.5 Sonnet, Claude 3 Opus, etc.)
 - OpenCode automatically reads AGENTS.md from repo
 - No manual file passing needed
+
+**UI Integration:**
+- Board UI polls status endpoint every 10 seconds for running tasks
+- Fire intensity increases based on number of running tasks
+- Task execution state tracked: idle → in_progress → completed/error
+- Auto-move to Trial/Cursed columns on completion
+- Agent comments posted with execution results
 
 **Advantages over Sprite Mock:**
 - ✅ Real AI execution (not simulated)
 - ✅ No GitHub PAT needed (local repos only)
 - ✅ AGENTS.md automatically detected
 - ✅ Full comment history as context
-- ✅ Event stream for live updates
+- ✅ Polling-based status updates
 - ✅ Ready for production use
 
 ---
