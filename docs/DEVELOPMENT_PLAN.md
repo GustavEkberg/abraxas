@@ -54,13 +54,16 @@ This document outlines the technical architecture, implementation phases, and de
 - None currently
 
 ### Next Steps
-1. **Phase 5 - Sprite Integration (Mock)** (current priority)
-   - Stub Sprite service for task execution simulation
-   - Progress indicators on tasks in "The Ritual"
-   - Auto-status transitions on completion/error
-   - Mock agent comments with PR links
+1. **Phase 5 - OpenCode SDK Integration** (current priority)
+   - Integrate @opencode-ai/sdk for local task execution
+   - Replace Sprite.dev mock with real OpenCode server
+   - Create session per task with title + description + comments as context
+   - Event stream for real-time progress tracking
+   - Auto-post agent comments on completion/error
+   - No GitHub PAT needed (works with local repos)
+   - OpenCode reads AGENTS.md from repository automatically
    
-2. **Phase 6 - GitHub Integration**
+2. **Phase 6 - GitHub Integration** (deferred to v2)
    - Feature branch creation
    - PR linking to tasks
    - GitHub API integration
@@ -103,8 +106,8 @@ This document outlines the technical architecture, implementation phases, and de
 - Better Auth with magic link flow ✅
 
 **External Integrations:**
-- Sprite.dev API (stubbed for v1) ⬜
-- GitHub API (for branch/PR creation) ⬜
+- OpenCode SDK (local server integration) 🔄
+- GitHub API (for branch/PR creation, deferred to v2) ⬜
 
 **Deployment:**
 - Vercel (primary target) ⬜
@@ -814,25 +817,64 @@ const createFeatureBranch = (task: Task, project: Project): Effect.Effect<string
 
 ---
 
-### Phase 5: Sprite Integration (Mock) (Week 5)
+### Phase 5: OpenCode SDK Integration (Week 5) 🔄 IN PROGRESS
 
-**Goals:** Simulate OpenCode execution flow
+**Goals:** Real AI-powered task execution via local OpenCode server
 
 **Tasks:**
-1. Stub Sprite service interface
-2. Mock session spawning
-3. Progress indicators on cards in "The Ritual"
-4. Mock session completion (30s delay)
-5. Auto-move tasks on completion/error
-6. Generate mock PR URLs
-7. Store sprite_sessions records
-8. Tests for execution flow
+1. ⬜ Install @opencode-ai/sdk package
+2. ⬜ Create OpenCode client service (`lib/opencode/client.ts`)
+3. ⬜ Build task execution service (`lib/opencode/task-execution.ts`)
+4. ⬜ Implement event stream monitoring (`lib/opencode/events.ts`)
+5. ⬜ Create execution API route (`POST /api/rituals/[id]/tasks/[taskId]/execute`)
+6. ⬜ Update board UI for execution triggers
+7. ⬜ Rename `sprite_sessions` to `opencode_sessions`
+8. ⬜ Add progress indicators and real-time updates
 
 **Deliverables:**
-- Full task execution flow (mocked)
-- Progress indicators working
-- Auto-status transitions
-- Mock agent comments with PR links
+- ⬜ OpenCode SDK integration working
+- ⬜ Real task execution with AI
+- ⬜ Event stream for live progress
+- ⬜ Agent comments auto-posted on completion/error
+
+**Implementation Plan:**
+
+**Architecture:**
+- User drags task to "The Ritual" → triggers OpenCode session
+- OpenCode reads AGENTS.md from project's `repositoryPath`
+- Task context (title + description + comments) sent as initial prompt
+- Event stream provides real-time updates
+- On completion: auto-move to "The Trial", post agent comment with summary
+- On error: auto-move to "Cursed", post agent comment with error details
+
+**Key Files:**
+- `lib/opencode/client.ts` - Initialize OpenCode client/server
+- `lib/opencode/task-execution.ts` - Execute tasks with full context
+- `lib/opencode/events.ts` - Monitor event stream for progress
+- `app/api/rituals/[id]/tasks/[taskId]/execute/route.ts` - Trigger execution
+- Update `schemas/sprite-sessions.ts` → `schemas/opencode-sessions.ts`
+
+**Session Management:**
+- Create new OpenCode session per task execution (isolation)
+- Store session ID in `opencode_sessions` table
+- Track status: in_progress → completed/error
+- Link to task for history tracking
+
+**Context Passing:**
+- Initial prompt includes:
+  - Task title (as summary)
+  - Task description (as detailed requirements)
+  - All comment history (for feedback context)
+- OpenCode automatically reads AGENTS.md from repo
+- No manual file passing needed
+
+**Advantages over Sprite Mock:**
+- ✅ Real AI execution (not simulated)
+- ✅ No GitHub PAT needed (local repos only)
+- ✅ AGENTS.md automatically detected
+- ✅ Full comment history as context
+- ✅ Event stream for live updates
+- ✅ Ready for production use
 
 ---
 
