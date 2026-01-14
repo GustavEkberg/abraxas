@@ -1,7 +1,235 @@
 import { opencodeClient } from "./client";
 
 /**
- * Check if an OpenCode session is complete.
+ * Session completion result.
+ */
+export interface SessionCompletionResult {
+  success: boolean;
+  summary?: string;
+  error?: string;
+}
+
+/**
+ * Progress event types for session monitoring.
+ */
+export type SessionProgressEvent =
+  | { type: "status"; status: "idle" | "busy" | "retry"; retryInfo?: { attempt: number; message: string; next: number } }
+  | { type: "question"; question: string }
+  | { type: "message"; message: string }
+  | { type: "error"; error: string }
+  | { type: "complete"; result: SessionCompletionResult };
+
+/**
+ * Monitor an OpenCode session using the event stream API.
+ * 
+ * Subscribes to real-time events from the OpenCode server and monitors
+ * session status, messages, and errors. Returns when the session completes
+ * or errors occur.
+ * 
+ * @param sessionId - OpenCode session ID to monitor
+ * @param directory - Repository directory path (must match the directory used when creating the session)
+ * @param onProgress - Callback for progress updates (status changes, questions, messages)
+ * @param timeoutMs - Maximum time to wait for completion (default: 30 minutes)
+ * @returns Completion result with success status, summary, or error
+ */
+export async function monitorSession(
+  sessionId: string,
+  directory: string | undefined,
+  onProgress?: (event: SessionProgressEvent) => void,
+  timeoutMs = 30 * 60 * 1000 // 30 minutes
+): Promise<SessionCompletionResult> {
+  const client = opencodeClient(directory);
+  
+  // Set up timeout
+  const timeoutPromise = new Promise<SessionCompletionResult>((resolve) => {
+    setTimeout(() => {
+      resolve({
+        success: false,
+        error: "Session monitoring timeout (30 minutes)",
+      });
+    }, timeoutMs);
+  });
+
+  // Monitor events
+  const monitorPromise = (async (): Promise<SessionCompletionResult> => {
+    try {
+      // Subscribe to events
+      console.log(`[session-monitor] Subscribing to events for session ${sessionId} in directory ${directory}`);
+      const stream = await client.event.subscribe({ query: { directory } });
+
+      // Track session state
+      let hasMessages = false;
+      let lastMessageRole: "user" | "assistant" | undefined;
+      let lastMessageText = "";
+      let eventCount = 0;
+
+      for await (const event of stream.stream) {
+        eventCount++;
+        if (eventCount % 10 === 0) {
+          console.log(`[session-monitor] Processed ${eventCount} events for session ${sessionId}`);
+        }
+        // Only process events for our target session
+        let eventSessionId: string | undefined;
+        
+        if ("sessionID" in event.properties && typeof event.properties.sessionID === "string") {
+          eventSessionId = event.properties.sessionID;
+        } else if (
+          "info" in event.properties &&
+          event.properties.info &&
+          typeof event.properties.info === "object" &&
+          "sessionID" in event.properties.info &&
+          typeof event.properties.info.sessionID === "string"
+        ) {
+          eventSessionId = event.properties.info.sessionID;
+        }
+
+        // Skip events that don't belong to our session
+        // If eventSessionId is undefined, skip it (we can't determine which session it's for)
+        if (!eventSessionId || eventSessionId !== sessionId) {
+          continue;
+        }
+
+        console.log(`[session-monitor] Event for session ${sessionId}: ${event.type}`);
+
+        // Handle different event types
+        switch (event.type) {
+          case "session.status": {
+            if ("status" in event.properties && typeof event.properties.status === "object" && event.properties.status !== null) {
+              const status = event.properties.status as { type: string; attempt?: number; message?: string; next?: number };
+              
+              if (status.type === "idle") {
+                console.log(`[session-monitor] Session ${sessionId} is idle. hasMessages=${hasMessages}, lastMessageRole=${lastMessageRole}`);
+                onProgress?.({ type: "status", status: "idle" });
+                
+                // Session is idle - check if it's complete
+                if (hasMessages && lastMessageRole === "assistant") {
+                  console.log(`[session-monitor] Session ${sessionId} completed successfully`);
+                  return {
+                    success: true,
+                    summary: lastMessageText || "Task execution completed",
+                  };
+                }
+              } else if (status.type === "busy") {
+                console.log(`[session-monitor] Session ${sessionId} is busy`);
+                onProgress?.({ type: "status", status: "busy" });
+              } else if (status.type === "retry" && typeof status.attempt === "number" && typeof status.message === "string" && typeof status.next === "number") {
+                onProgress?.({
+                  type: "status",
+                  status: "retry",
+                  retryInfo: {
+                    attempt: status.attempt,
+                    message: status.message,
+                    next: status.next,
+                  },
+                });
+              }
+            }
+            break;
+          }
+
+          case "session.idle": {
+            console.log(`[session-monitor] Session ${sessionId} idle event. hasMessages=${hasMessages}, lastMessageRole=${lastMessageRole}`);
+            // Session became idle - final check for completion
+            if (hasMessages && lastMessageRole === "assistant") {
+              console.log(`[session-monitor] Session ${sessionId} completed via idle event`);
+              return {
+                success: true,
+                summary: lastMessageText || "Task execution completed",
+              };
+            }
+            break;
+          }
+
+          case "session.error": {
+            if ("error" in event.properties && event.properties.error && typeof event.properties.error === "object") {
+              const error = event.properties.error as { message?: unknown };
+              const errorMessage = typeof error.message === "string" ? error.message : "Unknown error";
+              
+              onProgress?.({ type: "error", error: errorMessage });
+              
+              return {
+                success: false,
+                error: errorMessage,
+              };
+            }
+            break;
+          }
+
+          case "message.updated": {
+            if (
+              "info" in event.properties &&
+              event.properties.info &&
+              typeof event.properties.info === "object" &&
+              "role" in event.properties.info &&
+              "id" in event.properties.info &&
+              typeof event.properties.info.id === "string" &&
+              (event.properties.info.role === "user" || event.properties.info.role === "assistant")
+            ) {
+              const messageInfo = event.properties.info as { id: string; role: "user" | "assistant"; sessionID: string };
+              hasMessages = true;
+              lastMessageRole = messageInfo.role;
+              console.log(`[session-monitor] Message updated for session ${sessionId}: role=${messageInfo.role}, messageId=${messageInfo.id}`);
+
+              // Fetch the full message to get text content
+              try {
+                const messageResp = await client.session.message({
+                  path: { id: sessionId, messageID: messageInfo.id },
+                });
+                
+                if (messageResp.data) {
+                  const textParts = messageResp.data.parts.filter(part => part.type === "text");
+                  lastMessageText = textParts.map(part => part.text).join("\n");
+
+                  // Check if this is a question (message from assistant with question indicators)
+                  if (messageInfo.role === "assistant" && lastMessageText) {
+                    const questionIndicators = ["?", "please provide", "what is", "which", "how"];
+                    const hasQuestion = questionIndicators.some((indicator) =>
+                      lastMessageText.toLowerCase().includes(indicator)
+                    );
+
+                    if (hasQuestion) {
+                      onProgress?.({ type: "question", question: lastMessageText });
+                    } else {
+                      onProgress?.({ type: "message", message: lastMessageText });
+                    }
+                  }
+                }
+              } catch (error) {
+                console.error("Failed to fetch message content:", error);
+              }
+            }
+            break;
+          }
+
+          case "session.deleted": {
+            return {
+              success: false,
+              error: "Session was deleted",
+            };
+          }
+        }
+      }
+
+      // Stream ended without completion
+      return {
+        success: false,
+        error: "Event stream ended unexpectedly",
+      };
+    } catch (error) {
+      console.error("Failed to monitor session:", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  })();
+
+  // Race between monitoring and timeout
+  return Promise.race([monitorPromise, timeoutPromise]);
+}
+
+/**
+ * Check if an OpenCode session is complete (one-time check, no monitoring).
  * 
  * A session is considered complete when:
  * - Session exists
@@ -22,7 +250,6 @@ export async function isSessionComplete(
   error?: string;
 }> {
   try {
-    // Get session status, session data, and messages - use same directory context as session creation
     const client = opencodeClient(directory);
     const [statusResp, sessionResp, messagesResp] = await Promise.all([
       client.session.status({ query: { directory } }),
@@ -45,7 +272,6 @@ export async function isSessionComplete(
     // Check session status - only complete if status is "idle"
     const sessionStatus = sessionStatuses?.[sessionId];
     if (!sessionStatus || sessionStatus.type !== "idle") {
-      // Session is still busy or retrying
       return { complete: false, success: false };
     }
 
@@ -82,52 +308,8 @@ export async function isSessionComplete(
 }
 
 /**
- * Check if the session has a question that needs user input.
+ * @deprecated Use monitorSession instead - event-based monitoring is more efficient
  * 
- * Returns the question text if found.
- * 
- * @param sessionId - OpenCode session ID
- * @param directory - Repository directory path (must match the directory used when creating the session)
- */
-export async function getSessionQuestion(
-  sessionId: string,
-  directory?: string
-): Promise<string | null> {
-  try {
-    const client = opencodeClient(directory);
-    const messagesResp = await client.session.messages({
-      path: { id: sessionId },
-    });
-    const messages = messagesResp.data || [];
-
-    if (messages.length === 0) return null;
-
-    // Get last assistant message
-    const lastMessage = messages[messages.length - 1];
-    if (lastMessage.info.role !== "assistant") return null;
-
-    // Extract text content
-    const textParts = lastMessage.parts.filter(part => part.type === "text");
-    const text = textParts.map(part => part.text).join("\n");
-
-    // Simple heuristic: check if message ends with '?' or contains question indicators
-    const questionIndicators = ["?", "please provide", "what is", "which", "how"];
-    const hasQuestion = questionIndicators.some((indicator) =>
-      text.toLowerCase().includes(indicator)
-    );
-
-    if (hasQuestion) {
-      return text;
-    }
-
-    return null;
-  } catch (error) {
-    console.error("Failed to get session question:", error);
-    return null;
-  }
-}
-
-/**
  * Poll an OpenCode session until it completes.
  * 
  * @param sessionId - OpenCode session ID
@@ -139,16 +321,11 @@ export async function pollSessionUntilComplete(
   sessionId: string,
   onProgress?: (question: string) => void,
   intervalMs = 5000
-): Promise<{
-  success: boolean;
-  summary?: string;
-  error?: string;
-}> {
+): Promise<SessionCompletionResult> {
   const maxAttempts = 360; // 30 minutes with 5s interval
   let attempts = 0;
 
   while (attempts < maxAttempts) {
-    // Check if session is complete
     const result = await isSessionComplete(sessionId);
 
     if (result.complete) {
@@ -161,18 +338,38 @@ export async function pollSessionUntilComplete(
 
     // Check for questions
     if (onProgress) {
-      const question = await getSessionQuestion(sessionId);
-      if (question) {
-        onProgress(question);
+      try {
+        const client = opencodeClient();
+        const messagesResp = await client.session.messages({
+          path: { id: sessionId },
+        });
+        const messages = messagesResp.data || [];
+
+        if (messages.length > 0) {
+          const lastMessage = messages[messages.length - 1];
+          if (lastMessage.info.role === "assistant") {
+            const textParts = lastMessage.parts.filter(part => part.type === "text");
+            const text = textParts.map(part => part.text).join("\n");
+
+            const questionIndicators = ["?", "please provide", "what is", "which", "how"];
+            const hasQuestion = questionIndicators.some((indicator) =>
+              text.toLowerCase().includes(indicator)
+            );
+
+            if (hasQuestion) {
+              onProgress(text);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Failed to check for questions:", error);
       }
     }
 
-    // Wait before next poll
     await new Promise((resolve) => setTimeout(resolve, intervalMs));
     attempts++;
   }
 
-  // Timeout reached
   return {
     success: false,
     error: "Session polling timeout (30 minutes)",

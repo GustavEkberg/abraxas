@@ -8,6 +8,7 @@ import * as Comments from "@/lib/effects/comments";
 import * as OpencodeSessions from "@/lib/effects/opencode-sessions";
 import { executeTask } from "@/lib/opencode/task-execution";
 import { requireOpencodeServer } from "@/lib/opencode/health-check";
+import { startSessionWatcher } from "@/lib/opencode/session-watcher";
 
 /**
  * POST /api/rituals/[id]/tasks/[taskId]/execute
@@ -127,7 +128,15 @@ export async function POST(
     yield* Comments.createAgentComment(
       taskId,
       `Invocation ritual started.\n\nOpenCode session: \`${opencodeSessionId}\`\n\nFollow the unholy process in OpenCode.`,
-      "OpenCode Agent"
+      "Abraxas"
+    );
+
+    // Start background watcher for session completion/errors
+    startSessionWatcher(
+      taskId,
+      opencodeSession.id,
+      opencodeSessionId,
+      ritual.repositoryPath
     );
 
     return {

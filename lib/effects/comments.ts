@@ -1,8 +1,8 @@
-import { Effect } from "effect"
-import { eq, asc } from "drizzle-orm"
-import { DrizzleService } from "@/lib/db/drizzle-layer"
-import { comments, type Comment, type NewComment } from "@/schemas"
-import type { DatabaseError } from "@/lib/db/errors"
+import { Effect } from "effect";
+import { eq, asc } from "drizzle-orm";
+import { DrizzleService } from "@/lib/db/drizzle-layer";
+import { comments, type Comment, type NewComment } from "@/schemas";
+import type { DatabaseError } from "@/lib/db/errors";
 
 /**
  * List all comments for a task.
@@ -11,15 +11,15 @@ import type { DatabaseError } from "@/lib/db/errors"
  */
 export const listCommentsByTaskId = (taskId: string) =>
   Effect.gen(function* () {
-    const db = yield* DrizzleService
+    const db = yield* DrizzleService;
 
     const commentList = yield* db.query.comments.findMany({
       where: eq(comments.taskId, taskId),
       orderBy: asc(comments.createdAt),
-    })
+    });
 
-    return commentList
-  })
+    return commentList;
+  });
 
 /**
  * Create new comment.
@@ -28,12 +28,12 @@ export const listCommentsByTaskId = (taskId: string) =>
  */
 export const createComment = (data: NewComment) =>
   Effect.gen(function* () {
-    const db = yield* DrizzleService
+    const db = yield* DrizzleService;
 
-    const [comment] = yield* db.insert(comments).values(data).returning()
+    const [comment] = yield* db.insert(comments).values(data).returning();
 
-    return comment
-  })
+    return comment;
+  });
 
 /**
  * Create user comment.
@@ -50,7 +50,7 @@ export const createUserComment = (
     userId,
     content,
     isAgentComment: false,
-  })
+  });
 
 /**
  * Create agent comment.
@@ -66,8 +66,8 @@ export const createAgentComment = (
     taskId,
     content,
     isAgentComment: true,
-    agentName: agentName ?? "OpenCode Agent",
-  })
+    agentName: agentName ?? "Abraxas",
+  });
 
 /**
  * Delete comment.
@@ -76,7 +76,7 @@ export const createAgentComment = (
  */
 export const deleteComment = (id: string) =>
   Effect.gen(function* () {
-    const db = yield* DrizzleService
+    const db = yield* DrizzleService;
 
-    yield* db.delete(comments).where(eq(comments.id, id))
+    yield* db.delete(comments).where(eq(comments.id, id));
   })

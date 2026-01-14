@@ -5,19 +5,18 @@ import { DrizzleLive } from "@/lib/db/drizzle-layer"
 import * as Tasks from "@/lib/effects/tasks"
 import * as Projects from "@/lib/effects/projects"
 import * as OpencodeSessions from "@/lib/effects/opencode-sessions"
-import { handleSessionCompletion, handleSessionQuestion } from "@/lib/opencode/completion-handler"
-import { getSessionQuestion } from "@/lib/opencode/session-monitor"
+import { isSessionWatched } from "@/lib/opencode/session-watcher"
 
 /**
  * GET /api/rituals/[id]/tasks/[taskId]/status
- * Check task execution status and handle completion/questions.
+ * Check task execution status.
  * 
  * This endpoint:
  * - Gets current task and session status
- * - Checks if OpenCode session is complete
- * - Posts completion/error comments
- * - Updates task status accordingly
- * - Checks for questions and posts them as comments
+ * - Returns whether a background watcher is active
+ * 
+ * Note: Session completion/errors are handled automatically by the
+ * background watcher started when execution begins. No polling needed.
  */
 export async function GET(
   request: NextRequest,
@@ -50,66 +49,17 @@ export async function GET(
       )
     }
 
-    // Check if task is currently executing
-    if (task.executionState !== "in_progress") {
-      return {
-        status: task.executionState,
-        message: "Task is not currently executing",
-      }
-    }
-
-    // Get the active OpenCode session
+    // Get the active OpenCode session (if any)
     const sessions = yield* OpencodeSessions.listSessionsByTaskId(taskId)
     const activeSession = sessions.find((s) => s.status === "in_progress")
 
-    if (!activeSession || !activeSession.sessionId) {
-      return {
-        status: "error",
-        message: "No active OpenCode session found",
-      }
-    }
-
-    // Handle completion/questions (wrapped in tryPromise since not Effect-based)
-    const opencodeSessionId = activeSession.sessionId
-    if (!opencodeSessionId) {
-      return {
-        status: "error",
-        message: "OpenCode session ID not found",
-      }
-    }
-
-    yield* Effect.tryPromise({
-      try: async () => {
-        // Check and handle completion - pass repository path for directory context
-        await handleSessionCompletion(
-          taskId,
-          activeSession.id,
-          opencodeSessionId,
-          ritual.repositoryPath
-        )
-
-        // Check for questions - pass repository path for directory context
-        const question = await getSessionQuestion(
-          opencodeSessionId,
-          ritual.repositoryPath
-        )
-        if (question) {
-          await handleSessionQuestion(taskId, question)
-        }
-      },
-      catch: (error) => {
-        return new Error(
-          `Failed to handle session status: ${error instanceof Error ? error.message : String(error)}`
-        )
-      },
-    })
-
-    // Fetch updated task to return current status
-    const updatedTask = yield* Tasks.getTaskById(taskId)
+    // Check if background watcher is active
+    const watcherActive = activeSession ? isSessionWatched(activeSession.id) : false
 
     return {
-      status: updatedTask.executionState,
-      taskStatus: updatedTask.status,
+      status: task.executionState,
+      taskStatus: task.status,
+      watcherActive,
       message: "Status check complete",
     }
   })
