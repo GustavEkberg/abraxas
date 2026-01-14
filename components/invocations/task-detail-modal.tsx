@@ -58,6 +58,8 @@ export function TaskDetailModal({
   const [loading, setLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState<string>("");
   const [updatingModel, setUpdatingModel] = useState(false);
+  const [selectedExecutionState, setSelectedExecutionState] = useState<string>("");
+  const [updatingExecutionState, setUpdatingExecutionState] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -65,6 +67,13 @@ export function TaskDetailModal({
     "grok-1",
     "claude-sonnet-4-5",
     "claude-haiku-4-5",
+  ];
+
+  const AVAILABLE_EXECUTION_STATES = [
+    "idle",
+    "in_progress",
+    "completed",
+    "error",
   ];
 
   const fetchComments = useCallback(async () => {
@@ -90,6 +99,7 @@ export function TaskDetailModal({
     if (task && open) {
       fetchComments();
       setSelectedModel(task.model);
+      setSelectedExecutionState(task.executionState);
     }
   }, [task, open, fetchComments]);
 
@@ -139,6 +149,33 @@ export function TaskDetailModal({
     }
   }, [ritualId, task]);
 
+  const handleExecutionStateChange = useCallback(async (executionState: string) => {
+    if (!task) return;
+
+    setSelectedExecutionState(executionState);
+    setUpdatingExecutionState(true);
+
+    try {
+      const response = await fetch(
+        `/api/rituals/${ritualId}/tasks/${task.id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ executionState }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update task execution state");
+      }
+    } catch (error) {
+      console.error("Failed to update execution state:", error);
+      setSelectedExecutionState(task.executionState);
+    } finally {
+      setUpdatingExecutionState(false);
+    }
+  }, [ritualId, task]);
+
   const handleDelete = useCallback(async () => {
     if (!task) return;
 
@@ -185,17 +222,26 @@ export function TaskDetailModal({
             </Button>
           </DialogHeader>
 
-        {/* Task metadata */}
-        <div className="mb-6 flex items-center gap-4 text-sm">
-          <span className="rounded-full bg-purple-500/20 px-3 py-1 text-purple-400">
-            {task.status}
-          </span>
-          <span className="text-white/40">
-            {task.executionState !== "idle" && (
-              <span className="text-cyan-400">{task.executionState}</span>
-            )}
-          </span>
-        </div>
+         {/* Task metadata */}
+         <div className="mb-6 flex items-center gap-4">
+           <span className="text-sm text-white/60">Status:</span>
+           <span className="rounded-full bg-purple-500/20 px-3 py-1 text-purple-400 text-sm">
+             {task.status}
+           </span>
+           <span className="text-sm text-white/60 ml-4">Execution State:</span>
+           <Select value={selectedExecutionState} onValueChange={handleExecutionStateChange} disabled={updatingExecutionState}>
+             <SelectTrigger className="w-fit border-white/10 bg-zinc-900/50">
+               <SelectValue placeholder="Select state" />
+             </SelectTrigger>
+             <SelectContent className="border-white/10 bg-zinc-950">
+               {AVAILABLE_EXECUTION_STATES.map((state) => (
+                 <SelectItem key={state} value={state}>
+                   {state.charAt(0).toUpperCase() + state.slice(1).replace(/_/g, " ")}
+                 </SelectItem>
+               ))}
+             </SelectContent>
+           </Select>
+         </div>
 
         {/* Description */}
         <div className="mb-8">
