@@ -4,11 +4,13 @@ This document outlines the technical architecture, implementation phases, and de
 
 ## Current Status
 
-**Phase:** Phase 1 Complete ✅ | Phase 2 In Progress 🔄
+**Phase:** Phase 1-3 Complete ✅ | Phase 4 Next 🎯
 
 **Last Updated:** January 14, 2026
 
 ### Completed Features
+
+**Phase 1 - Foundation** ✅
 - ✅ Next.js 16.1 project with TypeScript and App Router
 - ✅ PostgreSQL 16 database with Docker Compose
 - ✅ Drizzle ORM with complete schema (5 tables + Better Auth tables)
@@ -21,19 +23,43 @@ This document outlines the technical architecture, implementation phases, and de
 - ✅ Tailwind CSS v4 with dark occult theme
 - ✅ shadcn/ui components installed (button, dialog, input, label, textarea, card)
 - ✅ ASCII fire background effect (grayscale, intensity-based)
-- ✅ Basic project list page with authentication
+
+**Phase 2 - Project Management** ✅
+- ✅ Project creation dialog with form validation
+- ✅ Project list/grid view with cards
+- ✅ Project API routes (GET, POST, GET by ID, PATCH, DELETE)
+- ✅ Click project card to navigate to board
+- ✅ Effect-based project service layer
+
+**Phase 3 - Board View & Tasks** ✅
+- ✅ Kanban board with six mystical columns (The Abyss, The Altar, The Ritual, Cursed, The Trial, Vanquished)
+- ✅ Task creation dialog (title + description only, per Ralph Wiggum methodology)
+- ✅ Task cards with draggable functionality
+- ✅ Drag-and-drop between columns (@dnd-kit)
+- ✅ Optimistic UI updates on drag
+- ✅ Task API routes (GET, POST, PATCH, DELETE)
+- ✅ Effect-based task service layer
+- ✅ Status transitions on drag
 
 ### In Progress
-- 🔄 Project CRUD API routes
-- 🔄 Project creation dialog with form validation
-- 🔄 Project list/grid view with cards
+- 🔄 Task detail modal (view full task details)
 
 ### Next Steps
-1. Complete project management UI and API
-2. Build board view with six mystical columns
-3. Implement task creation and drag-and-drop
-4. Add comments system
-5. Stub Sprite.dev integration
+1. **Phase 4 - Comments System** (current priority)
+   - Build comment component with user/agent styling
+   - Add comment form
+   - Comment API routes
+   - Display comments in task detail modal
+   
+2. **Phase 5 - Sprite Integration (Mock)**
+   - Stub Sprite service
+   - Progress indicators on tasks in "The Ritual"
+   - Auto-status transitions on completion/error
+   
+3. **Missing from Phases 1-3**
+   - GitHub PAT encryption utilities
+   - Repository path validation
+   - Tests for existing features
 
 ## Table of Contents
 
@@ -685,68 +711,93 @@ const createFeatureBranch = (task: Task, project: Project): Effect.Effect<string
 
 ---
 
-### Phase 2: Project Management (Week 2) 🔄 IN PROGRESS
+### Phase 2: Project Management (Week 2) ✅ COMPLETE
 
 **Goals:** Create/manage projects
 
 **Tasks:**
-1. ⏳ Project creation form with validation
-2. ⏳ Project list/grid view
-3. ⬜ Project settings page
-4. ⬜ Encrypt/decrypt GitHub PAT utilities
-5. ⬜ Validate repository path and PAT
+1. ✅ Project creation form with validation
+2. ✅ Project list/grid view
+3. ⬜ Project settings page (deferred)
+4. ⬜ Encrypt/decrypt GitHub PAT utilities (deferred)
+5. ⬜ Validate repository path and PAT (deferred)
 6. ✅ Effect-based project service layer
-7. ⬜ Tests for project CRUD operations
+7. ⬜ Tests for project CRUD operations (deferred)
 
 **Deliverables:**
-- ⏳ Full project management functionality
-- ⏳ Projects persisted to database
-- ⬜ Validated GitHub integration setup
+- ✅ Full project management functionality
+- ✅ Projects persisted to database
+- ⬜ Validated GitHub integration setup (deferred to Phase 6)
 
-**Current Status:**
-- Effect-based service layer completed (`lib/effects/projects.ts`)
-- Database schema ready with UUID primary keys
-- Next: Build project creation dialog and API routes
+**Implementation Notes:**
+- Project creation dialog (`components/rituals/create-ritual-dialog.tsx`)
+- Projects list page with grid layout (`app/(dashboard)/page.tsx`)
+- API routes: GET /api/rituals, POST /api/rituals, GET/PATCH/DELETE /api/rituals/[id]
+- Effect-based service layer (`lib/effects/projects.ts`)
+- GitHub PAT stored as plain text for now (encryption deferred)
+- Repository path validation deferred to Phase 6
 
 ---
 
-### Phase 3: Board View & Tasks (Week 3)
+### Phase 3: Board View & Tasks (Week 3) ✅ MOSTLY COMPLETE
 
 **Goals:** Kanban board with drag-and-drop
 
 **Tasks:**
-1. Board layout with six columns
-2. Task card component (compact view)
-3. Task creation modal
-4. Task detail modal
-5. Implement @dnd-kit drag-and-drop
-6. Task CRUD operations (Effect-based)
-7. Status transitions on drag
-8. Tests for task operations
+1. ✅ Board layout with six columns
+2. ✅ Task card component (compact view)
+3. ✅ Task creation modal (simplified per Ralph Wiggum - title + description only)
+4. ⬜ Task detail modal (in progress)
+5. ✅ Implement @dnd-kit drag-and-drop
+6. ✅ Task CRUD operations (Effect-based)
+7. ✅ Status transitions on drag
+8. ⬜ Tests for task operations (deferred)
 
 **Deliverables:**
-- Functional kanban board
-- Task management working
-- Drag-and-drop between columns
+- ✅ Functional kanban board
+- ✅ Task management working
+- ✅ Drag-and-drop between columns
+
+**Implementation Notes:**
+- Board page with six columns (`app/(dashboard)/rituals/[id]/page.tsx`)
+- Drag-and-drop using @dnd-kit/core with DndContext, useDraggable, useDroppable
+- Optimistic UI updates on drag with rollback on error
+- Task creation dialog (`components/invocations/create-invocation-dialog.tsx`)
+- API routes: GET /api/rituals/[id]/tasks, POST /api/rituals/[id]/tasks, PATCH/DELETE /api/rituals/[id]/tasks/[taskId]
+- Effect-based service layer (`lib/effects/tasks.ts`)
+- Draggable cards with visual feedback (opacity, transform)
+- DragOverlay for smooth drag experience
+- Ralph Wiggum methodology: Tasks only have title and description (no priority, labels, or due dates)
 
 ---
 
-### Phase 4: Comments & Feedback (Week 4)
+### Phase 4: Comments & Feedback (Week 4) 🎯 CURRENT PRIORITY
 
 **Goals:** Comment threads, user-agent communication
 
 **Tasks:**
-1. Comment component (user vs agent styling)
-2. Add comment form
-3. Display comments in task detail
-4. Comment CRUD operations
-5. Auto-add agent comments (mock)
-6. Tests for comment system
+1. ⬜ Task detail modal (expand to view full task + comments)
+2. ⬜ Comment component (user vs agent styling)
+3. ⬜ Add comment form
+4. ⬜ Display comments in task detail
+5. ⬜ Comment CRUD operations (Effect-based)
+6. ⬜ Auto-add agent comments (mock)
+7. ⬜ Tests for comment system (deferred)
 
 **Deliverables:**
-- Working comment threads
-- Visual distinction between user/agent comments
-- Feedback loop ready for Sprite integration
+- ⬜ Task detail modal with full view
+- ⬜ Working comment threads
+- ⬜ Visual distinction between user/agent comments
+- ⬜ Feedback loop ready for Sprite integration
+
+**Implementation Plan:**
+- Task detail modal (shadcn/ui dialog)
+- Comment list with chronological order
+- User comments: left-aligned, purple accent
+- Agent comments: right-aligned, cyan accent
+- Markdown support for comment content
+- API routes: GET /api/rituals/[id]/tasks/[taskId]/comments, POST /api/rituals/[id]/tasks/[taskId]/comments
+- Effect-based service layer (`lib/effects/comments.ts` already exists)
 
 ---
 
