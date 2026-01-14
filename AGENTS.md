@@ -417,6 +417,39 @@ export async function GET(
 /types                 # Shared types
 ```
 
+## Ralph Wiggum Development Methodology
+
+Abraxas follows the **Ralph Wiggum Technique** for AI-assisted development - a methodology that reduces software costs through autonomous agent work loops.
+
+**Reference:** https://github.com/ghuntley/how-to-ralph-wiggum
+
+### Key Principles
+
+1. **Keep invocations simple** - Only title and description required. No priority, labels, or due dates.
+2. **Let agents decide** - Agents will determine priority, approach, and implementation details.
+3. **Backpressure via tests** - Tests and TypeScript validation guide agent correctness.
+4. **Eventual consistency** - Agents self-correct through iteration.
+
+### Implementation Workflow
+
+When working with agents on Abraxas:
+
+1. **Define JTBD** (Job to be Done) - What user need does this serve?
+2. **Create specs** - One spec file per topic of concern in `specs/` directory
+3. **Generate plan** - Agent analyzes specs vs. code, creates `IMPLEMENTATION_PLAN.md`
+4. **Build loop** - Agent picks tasks, implements, tests, commits autonomously
+
+### Invocation Creation Philosophy
+
+Users create invocations with **minimal metadata** (title + description only). This aligns with Ralph Wiggum methodology:
+
+- Agents don't need priority/labels/dates to work effectively
+- Simpler inputs = clearer context for agents
+- Backpressure from tests > prescriptive metadata
+- Focus on **what** needs done, not **how/when**
+
+Priority, labels, and due dates were intentionally removed from the invocation model to embrace this approach.
+
 ## Summary
 
 Abraxas combines mystical aesthetics with practical project management and AI-powered task execution. Follow strict TypeScript and Effect standards while building a minimal, elegant interface that feels like summoning ancient powers to solve modern development challenges.
