@@ -54,8 +54,12 @@ export async function isSessionComplete(
     }
 
     // Check if there are any tool calls in progress
-    // If the last message has tool calls, the session is still active
-    const hasActiveToolCalls = lastMessage.parts.some(part => part.type === "tool");
+    // Tool calls with status "pending" or "running" indicate the session is still active
+    const hasActiveToolCalls = lastMessage.parts.some(
+      (part) =>
+        part.type === "tool" &&
+        (part.state.status === "pending" || part.state.status === "running")
+    );
 
     if (hasActiveToolCalls) {
       return { complete: false, success: false };
