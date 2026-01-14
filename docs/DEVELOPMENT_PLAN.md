@@ -91,7 +91,15 @@ This document outlines the technical architecture, implementation phases, and de
    - Webhook endpoints for Sprite.dev events
    - Production deployment
    
-4. **Deferred Items (v2+)**
+4. **Phase 9 - Ralph Loop Integration**
+   - PRD.md file management per project
+   - Progress tracking system (progress.txt)
+   - AFK Ralph execution mode (loop runner)
+   - Task auto-selection from PRD
+   - Auto-commit after each task completion
+   - Completion detection with sigil pattern
+   
+5. **Deferred Items (v2+)**
    - GitHub PAT encryption utilities
    - Repository path validation
    - Search/filter invocations
@@ -716,6 +724,42 @@ const createFeatureBranch = (task: Task, project: Project): Effect.Effect<string
 
 ---
 
+## Ralph Loop Integration Strategy
+
+Abraxas will support two execution modes:
+
+1. **Single Task Mode** (Current) - User drags task to "The Ritual", agent executes once
+2. **Ralph Loop Mode** (Phase 9) - Agent autonomously picks tasks from PRD, executes in loop
+
+### Ralph Architecture
+
+**Per-Project Setup:**
+- `PRD.md` - Product requirements document (task source)
+- `progress.txt` - Completed work tracking between runs
+- Ralph execution spawns OpenCode/Sprite sessions automatically
+- Each iteration: read PRD → pick task → implement → commit → update progress
+
+**UI Integration:**
+- "Start Ralph Loop" button on project board
+- Configure loop iterations (default: 20)
+- Progress indicator showing current iteration
+- Real-time commit feed as Ralph works
+- Stop button to cancel loop
+
+**Task Selection:**
+- Ralph reads PRD.md and progress.txt
+- Picks highest-priority incomplete task
+- Creates invocation card automatically (if not exists)
+- Moves card through board columns as it works
+- Updates progress.txt after completion
+
+**Completion Detection:**
+- Ralph outputs `<promise>COMPLETE</promise>` when PRD is done
+- Loop exits early if sigil detected
+- Otherwise runs for configured iteration count
+
+---
+
 ## Development Phases
 
 ### Phase 1: Foundation (Week 1) ✅ COMPLETED
@@ -970,7 +1014,7 @@ const createFeatureBranch = (task: Task, project: Project): Effect.Effect<string
 
 **Tasks:**
 1. Set up Vercel project
-2. Configure PostgreSQL (Vercel Postgres)
+2. Configure PostgreSQL (Vercel Postgres or Neon)
 3. Environment variables configuration
 4. Deploy staging environment
 5. Test end-to-end on staging
@@ -980,7 +1024,39 @@ const createFeatureBranch = (task: Task, project: Project): Effect.Effect<string
 **Deliverables:**
 - Live production deployment
 - Monitoring set up
-- MVP complete
+- Cloud-based execution working
+
+---
+
+### Phase 9: Ralph Loop Integration (Week 9)
+
+**Goals:** Autonomous task execution with PRD-driven loops
+
+**Tasks:**
+1. Add PRD.md and progress.txt file management to projects
+2. Create Ralph loop runner service (`lib/ralph/loop-runner.ts`)
+3. Implement task auto-selection from PRD
+4. Build "Start Ralph Loop" UI controls
+5. Real-time progress tracking during loop execution
+6. Completion sigil detection (`<promise>COMPLETE</promise>`)
+7. Auto-commit after each task with progress updates
+8. Ralph session management (start, stop, resume)
+9. Tests for Ralph loop execution
+10. Document Ralph workflow in AGENTS.md
+
+**Deliverables:**
+- Working Ralph loop mode alongside single-task mode
+- PRD-driven autonomous development
+- AFK coding with iteration caps
+- Real-time loop monitoring in UI
+- Ralph methodology fully integrated
+
+**Implementation Notes:**
+- Ralph loops run OpenCode/Sprite sessions automatically
+- Each iteration creates/updates invocation cards
+- Progress.txt tracks completed work between runs
+- Loop can be stopped/resumed safely
+- Vercel deployment supports long-running Ralph sessions
 
 ---
 

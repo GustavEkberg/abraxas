@@ -1,5 +1,4 @@
 import { opencodeClient } from "./client";
-import type { Session } from "@opencode-ai/sdk";
 
 /**
  * Check if an OpenCode session is complete.
@@ -56,17 +55,15 @@ export async function isSessionComplete(
 
     // Check if there are any tool calls in progress
     // If the last message has tool calls, the session is still active
-    const hasActiveToolCalls = lastMessage.parts.some(
-      (part: any) => part.type === "tool_use"
-    );
+    const hasActiveToolCalls = lastMessage.parts.some(part => part.type === "tool");
 
     if (hasActiveToolCalls) {
       return { complete: false, success: false };
     }
 
     // Session is complete - extract summary from last message
-    const textParts = lastMessage.parts.filter((part: any) => part.type === "text");
-    const summary = textParts.map((part: any) => part.text).join("\n");
+    const textParts = lastMessage.parts.filter(part => part.type === "text");
+    const summary = textParts.map(part => part.text).join("\n");
 
     return {
       complete: true,
@@ -109,8 +106,8 @@ export async function getSessionQuestion(
     if (lastMessage.info.role !== "assistant") return null;
 
     // Extract text content
-    const textParts = lastMessage.parts.filter((part: any) => part.type === "text");
-    const text = textParts.map((part: any) => part.text).join("\n");
+    const textParts = lastMessage.parts.filter(part => part.type === "text");
+    const text = textParts.map(part => part.text).join("\n");
 
     // Simple heuristic: check if message ends with '?' or contains question indicators
     const questionIndicators = ["?", "please provide", "what is", "which", "how"];
