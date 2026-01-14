@@ -74,6 +74,7 @@ export function TaskDetailModal({
   const AVAILABLE_EXECUTION_STATES = [
     "idle",
     "in_progress",
+    "awaiting_review",
     "completed",
     "error",
   ];
@@ -92,7 +93,7 @@ export function TaskDetailModal({
       }
     } catch (error) {
       console.error("Failed to fetch comments:", error);
-     } finally {
+    } finally {
       setLoading(false);
     }
   }, [ritualId, task]);
@@ -228,90 +229,90 @@ export function TaskDetailModal({
             </Button>
           </DialogHeader>
 
-         {/* Task metadata */}
-         <div className="mb-6 flex items-center gap-4">
-           <span className="text-sm text-white/60">Status:</span>
-           <span className="rounded-full bg-purple-500/20 px-3 py-1 text-purple-400 text-sm">
-             {task.status}
-           </span>
-           <span className="text-sm text-white/60 ml-4">Execution State:</span>
-           <Select value={selectedExecutionState} onValueChange={handleExecutionStateChange} disabled={updatingExecutionState}>
-             <SelectTrigger className="w-fit border-white/10 bg-zinc-900/50">
-               <SelectValue placeholder="Select state" />
-             </SelectTrigger>
-             <SelectContent className="border-white/10 bg-zinc-950">
-               {AVAILABLE_EXECUTION_STATES.map((state) => (
-                 <SelectItem key={state} value={state}>
-                   {state.charAt(0).toUpperCase() + state.slice(1).replace(/_/g, " ")}
-                 </SelectItem>
-               ))}
-             </SelectContent>
-           </Select>
-         </div>
-
-        {/* Description */}
-        <div className="mb-8">
-          <h3 className="mb-2 text-sm font-medium text-white/60">
-            Description
-          </h3>
-          <div className="rounded-lg border border-white/10 bg-zinc-900/50 p-4 text-white/80 whitespace-pre-wrap">
-            {task.description}
+          {/* Task metadata */}
+          <div className="mb-6 flex items-center gap-4">
+            <span className="text-sm text-white/60">Status:</span>
+            <span className="rounded-full bg-purple-500/20 px-3 py-1 text-purple-400 text-sm">
+              {task.status}
+            </span>
+            <span className="text-sm text-white/60 ml-4">Execution State:</span>
+            <Select value={selectedExecutionState} onValueChange={handleExecutionStateChange} disabled={updatingExecutionState}>
+              <SelectTrigger className="w-fit border-white/10 bg-zinc-900/50">
+                <SelectValue placeholder="Select state" />
+              </SelectTrigger>
+              <SelectContent className="border-white/10 bg-zinc-950">
+                {AVAILABLE_EXECUTION_STATES.map((state) => (
+                  <SelectItem key={state} value={state}>
+                    {state.charAt(0).toUpperCase() + state.slice(1).replace(/_/g, " ")}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        </div>
 
-        {/* Task model */}
-        <div className="mb-8">
-          <h3 className="mb-2 text-sm font-medium text-white/60">
-            Task model
-          </h3>
-          <Select value={selectedModel} onValueChange={handleModelChange} disabled={updatingModel}>
-            <SelectTrigger className="w-full border-white/10 bg-zinc-900/50">
-              <SelectValue placeholder="Select a model" />
-            </SelectTrigger>
-            <SelectContent className="border-white/10 bg-zinc-950">
-              {AVAILABLE_MODELS.map((model) => (
-                <SelectItem key={model} value={model}>
-                  {model}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Comments section */}
-        <div className="border-t border-white/10 pt-6">
-          <h3 className="mb-4 text-lg font-semibold text-white/90">
-            Comments
-          </h3>
-
-          {loading ? (
-            <div className="py-8 text-center text-white/40">
-              Loading comments...
+          {/* Description */}
+          <div className="mb-8">
+            <h3 className="mb-2 text-sm font-medium text-white/60">
+              Description
+            </h3>
+            <div className="rounded-lg border border-white/10 bg-zinc-900/50 p-4 text-white/80 whitespace-pre-wrap">
+              {task.description}
             </div>
-          ) : comments.length === 0 ? (
-            <div className="mb-6 py-8 text-center text-white/40">
-              No comments yet
-            </div>
-          ) : (
-            <div className="mb-6 max-h-[400px] overflow-y-auto">
-              {comments.map((comment) => (
-                <Comment
-                  key={comment.id}
-                  content={comment.content}
-                  isAgentComment={comment.isAgentComment}
-                  agentName={comment.agentName}
-                  userName={comment.userName}
-                  createdAt={comment.createdAt}
-                />
-              ))}
-            </div>
-          )}
+          </div>
 
-           {/* Add comment form */}
-           <AddCommentForm onSubmit={handleAddComment} />
-         </div>
-       </DialogContent>
-     </Dialog>
+          {/* Task model */}
+          <div className="mb-8">
+            <h3 className="mb-2 text-sm font-medium text-white/60">
+              Task model
+            </h3>
+            <Select value={selectedModel} onValueChange={handleModelChange} disabled={updatingModel}>
+              <SelectTrigger className="w-full border-white/10 bg-zinc-900/50">
+                <SelectValue placeholder="Select a model" />
+              </SelectTrigger>
+              <SelectContent className="border-white/10 bg-zinc-950">
+                {AVAILABLE_MODELS.map((model) => (
+                  <SelectItem key={model} value={model}>
+                    {model}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Comments section */}
+          <div className="border-t border-white/10 pt-6">
+            <h3 className="mb-4 text-lg font-semibold text-white/90">
+              Comments
+            </h3>
+
+            {loading ? (
+              <div className="py-8 text-center text-white/40">
+                Loading comments...
+              </div>
+            ) : comments.length === 0 ? (
+              <div className="mb-6 py-8 text-center text-white/40">
+                No comments yet
+              </div>
+            ) : (
+              <div className="mb-6 max-h-[400px] overflow-y-auto">
+                {comments.map((comment) => (
+                  <Comment
+                    key={comment.id}
+                    content={comment.content}
+                    isAgentComment={comment.isAgentComment}
+                    agentName={comment.agentName}
+                    userName={comment.userName}
+                    createdAt={comment.createdAt}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Add comment form */}
+            <AddCommentForm onSubmit={handleAddComment} />
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete confirmation dialog */}
       <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
