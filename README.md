@@ -111,21 +111,16 @@ Keep this running in a separate terminal. This enables autonomous task execution
 
 ### 6. Start Development Server
 
+**Start OpenCode server:**
+```bash
+opencode serve --port 4096
+```
+
 ```bash
 pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) to see the application.
-
-### 7. Explore Database (Optional)
-
-Open Drizzle Studio to browse your database:
-
-```bash
-pnpm db:studio
-```
-
-This opens a GUI at [https://local.drizzle.studio](https://local.drizzle.studio).
 
 ## OpenCode Integration
 
@@ -251,5 +246,3 @@ The `docker-compose.yml` provides:
 - Persistent data volume (`postgres_data`)
 - Health checks for connection reliability
 - Pre-configured credentials for local development
-
-🔮

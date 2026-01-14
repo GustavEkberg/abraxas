@@ -89,13 +89,14 @@ export async function POST(
       );
     }
 
-    // Create invocation
-    const input: NewTask = {
-      projectId: id,
-      title: body.title,
-      description: body.description,
-      status: body.status || "abyss",
-    };
+     // Create invocation
+     const input: NewTask = {
+       projectId: id,
+       title: body.title,
+       description: body.description,
+       model: body.model || "grok-1",
+       status: body.status || "abyss",
+     };
 
     const invocation = yield* Tasks.createTask(input);
     return invocation;

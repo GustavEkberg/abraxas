@@ -7,6 +7,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Comment } from "./comment";
 import { AddCommentForm } from "./add-comment-form";
 
@@ -16,6 +23,7 @@ interface Task {
   description: string;
   status: string;
   executionState: string;
+  model: string;
   createdAt: Date;
 }
 
@@ -47,6 +55,14 @@ export function TaskDetailModal({
 }: TaskDetailModalProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<string>("");
+  const [updatingModel, setUpdatingModel] = useState(false);
+
+  const AVAILABLE_MODELS = [
+    "grok-1",
+    "claude-sonnet-4-5",
+    "claude-haiku-4-5",
+  ];
 
   const fetchComments = useCallback(async () => {
     if (!task) return;
@@ -70,6 +86,7 @@ export function TaskDetailModal({
   useEffect(() => {
     if (task && open) {
       fetchComments();
+      setSelectedModel(task.model);
     }
   }, [task, open, fetchComments]);
 
@@ -91,6 +108,33 @@ export function TaskDetailModal({
       throw new Error("Failed to post comment");
     }
   }, [ritualId, task, fetchComments]);
+
+  const handleModelChange = useCallback(async (model: string) => {
+    if (!task) return;
+
+    setSelectedModel(model);
+    setUpdatingModel(true);
+
+    try {
+      const response = await fetch(
+        `/api/rituals/${ritualId}/tasks/${task.id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ model }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update task model");
+      }
+    } catch (error) {
+      console.error("Failed to update model:", error);
+      setSelectedModel(task.model);
+    } finally {
+      setUpdatingModel(false);
+    }
+  }, [ritualId, task]);
 
   if (!task) return null;
 
@@ -123,6 +167,25 @@ export function TaskDetailModal({
           <div className="rounded-lg border border-white/10 bg-zinc-900/50 p-4 text-white/80 whitespace-pre-wrap">
             {task.description}
           </div>
+        </div>
+
+        {/* Task model */}
+        <div className="mb-8">
+          <h3 className="mb-2 text-sm font-medium text-white/60">
+            Task model
+          </h3>
+          <Select value={selectedModel} onValueChange={handleModelChange} disabled={updatingModel}>
+            <SelectTrigger className="w-full border-white/10 bg-zinc-900/50">
+              <SelectValue placeholder="Select a model" />
+            </SelectTrigger>
+            <SelectContent className="border-white/10 bg-zinc-950">
+              {AVAILABLE_MODELS.map((model) => (
+                <SelectItem key={model} value={model}>
+                  {model}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Comments section */}

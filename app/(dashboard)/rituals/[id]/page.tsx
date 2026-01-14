@@ -30,6 +30,7 @@ interface Invocation {
   description: string;
   status: string;
   executionState: string;
+  model: string;
   createdAt: Date;
 }
 

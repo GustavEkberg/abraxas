@@ -109,13 +109,14 @@ export async function PATCH(
       );
     }
 
-    // Update invocation
-    const updates: Partial<NewTask> = {};
-    if (body.title !== undefined) updates.title = body.title;
-    if (body.description !== undefined) updates.description = body.description;
-    if (body.status !== undefined) updates.status = body.status;
-    if (body.executionState !== undefined)
-      updates.executionState = body.executionState;
+     // Update invocation
+     const updates: Partial<NewTask> = {};
+     if (body.title !== undefined) updates.title = body.title;
+     if (body.description !== undefined) updates.description = body.description;
+     if (body.status !== undefined) updates.status = body.status;
+     if (body.executionState !== undefined)
+       updates.executionState = body.executionState;
+     if (body.model !== undefined) updates.model = body.model;
 
     const updated = yield* Tasks.updateTask(taskId, updates);
     return updated;

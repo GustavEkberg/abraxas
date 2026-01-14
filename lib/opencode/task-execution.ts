@@ -1,3 +1,5 @@
+import { TaskModel } from "@/schemas";
+import { getTaskModel } from "../utils";
 import { opencodeClient } from "./client";
 import type { Session, Message } from "@opencode-ai/sdk";
 
@@ -5,6 +7,7 @@ interface Task {
   id: string;
   title: string;
   description: string;
+  model: TaskModel;
 }
 
 interface Project {
@@ -71,18 +74,21 @@ export async function executeTask(
 
   const promptText = contextParts.join("\n");
 
+  // Get the model and provider for the task
+  const { providerID, modelID } = getTaskModel(task.model);
+
+  console.log("Executing task with model:", providerID, modelID);
+
   // Send the initial prompt to OpenCode with Abraxas agent and Claude Sonnet 4.5
   // The agent parameter tells OpenCode to use the Abraxas task execution agent
   // OpenCode will also read AGENTS.md from the repository automatically
-  await client.session.prompt({
+  client.session.prompt({
     path: { id: session.id },
     body: {
-      agent: "abraxas-task-executor",
+      agent: "abraxas-agent",
       model: {
-        // providerID: "anthropic",
-        providerID: "opencode",
-        //modelID: "claude-sonnet-4-5-20250929",
-        modelID: "grok-code",
+        providerID,
+        modelID,
       },
       parts: [{ type: "text", text: promptText }],
     },

@@ -1,17 +1,15 @@
-import { Effect } from "effect"
-import { eq, and, desc } from "drizzle-orm"
-import { DrizzleService } from "@/lib/db/drizzle-layer"
+import { Effect } from "effect";
+import { eq, and, desc } from "drizzle-orm";
+import { DrizzleService } from "@/lib/db/drizzle-layer";
 import {
   tasks,
-  type Task,
   type NewTask,
   type TaskStatus,
   type TaskExecutionState,
-} from "@/schemas"
+} from "@/schemas";
 import {
   RecordNotFoundError,
-  type DatabaseError,
-} from "@/lib/db/errors"
+} from "@/lib/db/errors";
 
 /**
  * Get task by ID.
@@ -20,11 +18,11 @@ import {
  */
 export const getTaskById = (id: string) =>
   Effect.gen(function* () {
-    const db = yield* DrizzleService
+    const db = yield* DrizzleService;
 
     const task = yield* db.query.tasks.findFirst({
       where: eq(tasks.id, id),
-    })
+    });
 
     if (!task) {
       return yield* Effect.fail(
@@ -33,11 +31,11 @@ export const getTaskById = (id: string) =>
           table: "tasks",
           id,
         })
-      )
+      );
     }
 
-    return task
-  })
+    return task;
+  });
 
 /**
  * List all tasks for a project.
@@ -46,15 +44,15 @@ export const getTaskById = (id: string) =>
  */
 export const listTasksByProjectId = (projectId: string) =>
   Effect.gen(function* () {
-    const db = yield* DrizzleService
+    const db = yield* DrizzleService;
 
     const taskList = yield* db.query.tasks.findMany({
       where: eq(tasks.projectId, projectId),
       orderBy: desc(tasks.createdAt),
-    })
+    });
 
-    return taskList
-  })
+    return taskList;
+  });
 
 /**
  * List tasks by project and status.
@@ -63,15 +61,15 @@ export const listTasksByProjectId = (projectId: string) =>
  */
 export const listTasksByStatus = (projectId: string, status: TaskStatus) =>
   Effect.gen(function* () {
-    const db = yield* DrizzleService
+    const db = yield* DrizzleService;
 
     const taskList = yield* db.query.tasks.findMany({
       where: and(eq(tasks.projectId, projectId), eq(tasks.status, status)),
       orderBy: desc(tasks.createdAt),
-    })
+    });
 
-    return taskList
-  })
+    return taskList;
+  });
 
 /**
  * Create new task.
@@ -80,12 +78,12 @@ export const listTasksByStatus = (projectId: string, status: TaskStatus) =>
  */
 export const createTask = (data: NewTask) =>
   Effect.gen(function* () {
-    const db = yield* DrizzleService
+    const db = yield* DrizzleService;
 
-    const [task] = yield* db.insert(tasks).values(data).returning()
+    const [task] = yield* db.insert(tasks).values(data).returning();
 
-    return task
-  })
+    return task;
+  });
 
 /**
  * Update task.
@@ -94,13 +92,13 @@ export const createTask = (data: NewTask) =>
  */
 export const updateTask = (id: string, data: Partial<NewTask>) =>
   Effect.gen(function* () {
-    const db = yield* DrizzleService
+    const db = yield* DrizzleService;
 
     const [task] = yield* db
       .update(tasks)
       .set({ ...data, updatedAt: new Date() })
       .where(eq(tasks.id, id))
-      .returning()
+      .returning();
 
     if (!task) {
       return yield* Effect.fail(
@@ -109,11 +107,11 @@ export const updateTask = (id: string, data: Partial<NewTask>) =>
           table: "tasks",
           id,
         })
-      )
+      );
     }
 
-    return task
-  })
+    return task;
+  });
 
 /**
  * Update task status (for column changes).
@@ -121,7 +119,7 @@ export const updateTask = (id: string, data: Partial<NewTask>) =>
  * Drizzle queries return Effect automatically when using @effect/sql-drizzle.
  */
 export const updateTaskStatus = (id: string, status: TaskStatus) =>
-  updateTask(id, { status, updatedAt: new Date() })
+  updateTask(id, { status, updatedAt: new Date() });
 
 /**
  * Update task execution state.
@@ -131,7 +129,7 @@ export const updateTaskStatus = (id: string, status: TaskStatus) =>
 export const updateTaskExecutionState = (
   id: string,
   executionState: TaskExecutionState
-) => updateTask(id, { executionState, updatedAt: new Date() })
+) => updateTask(id, { executionState, updatedAt: new Date() });
 
 /**
  * Delete task.
@@ -140,7 +138,7 @@ export const updateTaskExecutionState = (
  */
 export const deleteTask = (id: string) =>
   Effect.gen(function* () {
-    const db = yield* DrizzleService
+    const db = yield* DrizzleService;
 
-    yield* db.delete(tasks).where(eq(tasks.id, id))
+    yield* db.delete(tasks).where(eq(tasks.id, id));
   })

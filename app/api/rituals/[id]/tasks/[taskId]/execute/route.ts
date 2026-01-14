@@ -85,6 +85,7 @@ export async function POST(
             id: task.id,
             title: task.title,
             description: task.description,
+            model: task.model,
           },
           {
             id: ritual.id,

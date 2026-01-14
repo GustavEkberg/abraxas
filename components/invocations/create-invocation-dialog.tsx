@@ -13,6 +13,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { TaskModel } from "@/schemas";
 
 interface CreateInvocationDialogProps {
   ritualId: string;
@@ -33,12 +41,20 @@ export function CreateInvocationDialog({
 }: CreateInvocationDialogProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [model, setModel] = useState("grok-1");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const AVAILABLE_MODELS: TaskModel[] = [
+    "grok-1",
+    "claude-sonnet-4-5",
+    "claude-haiku-4-5",
+  ];
 
   const resetForm = () => {
     setTitle("");
     setDescription("");
+    setModel("grok-1");
     setError(null);
   };
 
@@ -60,6 +76,7 @@ export function CreateInvocationDialog({
         body: JSON.stringify({
           title: title.trim(),
           description: description.trim(),
+          model,
         }),
       });
 
@@ -121,6 +138,25 @@ export function CreateInvocationDialog({
                 className="min-h-[120px] border-white/10 bg-zinc-900 text-white/90 placeholder:text-white/40"
                 required
               />
+            </div>
+
+            {/* Model */}
+            <div className="space-y-2">
+              <Label htmlFor="model" className="text-white/90">
+                AI Model
+              </Label>
+              <Select value={model} onValueChange={setModel}>
+                <SelectTrigger className="border-white/10 bg-zinc-900">
+                  <SelectValue placeholder="Select a model" />
+                </SelectTrigger>
+                <SelectContent className="border-white/10 bg-zinc-950">
+                  {AVAILABLE_MODELS.map((modelName) => (
+                    <SelectItem key={modelName} value={modelName}>
+                      {modelName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Error Message */}
