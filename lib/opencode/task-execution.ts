@@ -70,11 +70,13 @@ export async function executeTask(
 
   const promptText = contextParts.join("\n")
 
-  // Send the initial prompt to OpenCode
-  // OpenCode will read AGENTS.md from the repository automatically
+  // Send the initial prompt to OpenCode with Abraxas agent
+  // The agent parameter tells OpenCode to use the Abraxas task execution agent
+  // OpenCode will also read AGENTS.md from the repository automatically
   await opencodeClient.session.prompt({
     path: { id: session.id },
     body: {
+      agent: "abraxas-task-executor",
       parts: [{ type: "text", text: promptText }],
     },
   })
