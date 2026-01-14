@@ -1,5 +1,16 @@
 # Abraxas Agent Configuration
 
+## CRITICAL AGENT INSTRUCTIONS - READ FIRST
+
+When working on Abraxas tasks:
+- **NEVER commit directly to main** - Always create a feature branch
+- **ALWAYS create branches** with descriptive names (e.g., `feature/task-name`, `fix/issue-name`)
+- **Development plan updates** - Include `docs/DEVELOPMENT_PLAN.md` updates in the same PR with completed work
+- **Standard workflow**: `git checkout -b feature/description` → make changes → commit → push → share url to PR draft
+- **NEVER kill and start the dev server** - If you need to restart the dev server
+
+---
+
 Abraxas is a mystical project management interface that summons the power of OpenCode to solve development invocations. When invocations are dragged to "The Ritual" column, Abraxas spawns autonomous coding sessions that execute work and create pull requests.
 
 ## Project Overview
