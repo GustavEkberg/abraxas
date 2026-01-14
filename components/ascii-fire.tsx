@@ -10,6 +10,7 @@ interface AsciiFireProps {
  * ASCII fire background effect.
  * Renders a grayscale fire animation at the bottom of the screen.
  * Intensity increases with active ritual tasks.
+ * Smoothly interpolates intensity changes for a gradual visual effect.
  */
 export function AsciiFire({ intensity = 0 }: AsciiFireProps) {
   const fireRef = useRef<HTMLPreElement>(null);
@@ -17,6 +18,8 @@ export function AsciiFire({ intensity = 0 }: AsciiFireProps) {
   const widthRef = useRef(0);
   const heightRef = useRef(50);
   const animationFrameRef = useRef<number | undefined>(undefined);
+  const currentIntensityRef = useRef(0);
+  const targetIntensityRef = useRef(0);
 
   useEffect(() => {
     if (!fireRef.current) return;
@@ -25,6 +28,7 @@ export function AsciiFire({ intensity = 0 }: AsciiFireProps) {
     const charSet = " .:-=+*#%@".split("");
     const height = heightRef.current;
     const decayRate = 2; // Controls fire height
+    const interpolationSpeed = 0.15; // Speed of intensity change (0-1, lower = slower)
 
     function init() {
       // Calculate width based on character size (~6px per char)
@@ -36,9 +40,21 @@ export function AsciiFire({ intensity = 0 }: AsciiFireProps) {
       const width = widthRef.current;
       const firePixels = firePixelsRef.current;
 
-      // 1. Update the "Source" (bottom row) with intensity
+      // Update target intensity when prop changes
+      targetIntensityRef.current = intensity;
+
+      // Smoothly interpolate current intensity towards target
+      const diff = targetIntensityRef.current - currentIntensityRef.current;
+      if (Math.abs(diff) > 0.1) {
+        currentIntensityRef.current += diff * interpolationSpeed;
+      } else {
+        currentIntensityRef.current = targetIntensityRef.current;
+      }
+
+      // 1. Update the "Source" (bottom row) with interpolated intensity
+      const displayIntensity = Math.round(currentIntensityRef.current);
       for (let i = 0; i < width; i++) {
-        firePixels[(height - 1) * width + i] = intensity;
+        firePixels[(height - 1) * width + i] = displayIntensity;
       }
 
       // 2. Propagate heat upwards
