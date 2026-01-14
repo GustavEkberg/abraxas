@@ -4,8 +4,8 @@
 @theme inline {
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-ibm-plex-mono);
+  --font-mono: var(--font-ibm-plex-mono);
   --color-sidebar-ring: hsl(var(--sidebar-ring));
   --color-sidebar-border: hsl(var(--sidebar-border));
   --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
@@ -87,6 +87,29 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-mono;
   }
+}
+
+/* ASCII Border Utilities */
+.ascii-border {
+  position: relative;
+  border: none;
+}
+
+.ascii-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: 
+    /* Top border */
+    linear-gradient(90deg, transparent 0%, transparent calc(100% - 1ch), currentColor calc(100% - 1ch)) 0 0 / 1ch 1px,
+    /* Bottom border */
+    linear-gradient(90deg, transparent 0%, transparent calc(100% - 1ch), currentColor calc(100% - 1ch)) 0 100% / 1ch 1px,
+    /* Left border */
+    linear-gradient(0deg, transparent 0%, transparent calc(100% - 1ch), currentColor calc(100% - 1ch)) 0 0 / 1px 1ch,
+    /* Right border */
+    linear-gradient(0deg, transparent 0%, transparent calc(100% - 1ch), currentColor calc(100% - 1ch)) 100% 0 / 1px 1ch;
+  background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
 }

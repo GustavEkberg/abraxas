@@ -50,7 +50,7 @@ export default function VerifyContent() {
 
   if (status === "verifying") {
     return (
-      <div className="rounded-lg border border-border bg-card p-8 text-center">
+      <div className="border border-dashed border-border bg-card p-8 text-center font-mono">
         <div className="mb-4 text-4xl">🔮</div>
         <h1 className="mb-4 text-2xl font-semibold text-foreground">
           Verifying...
@@ -64,7 +64,7 @@ export default function VerifyContent() {
 
   if (status === "success") {
     return (
-      <div className="rounded-lg border border-border bg-card p-8 text-center">
+      <div className="border border-dashed border-border bg-card p-8 text-center font-mono">
         <div className="mb-4 text-4xl">✨</div>
         <h1 className="mb-4 text-2xl font-semibold text-foreground">
           Welcome to Abraxas
@@ -77,7 +77,7 @@ export default function VerifyContent() {
   }
 
   return (
-    <div className="rounded-lg border border-destructive/20 bg-card p-8 text-center">
+    <div className="border border-dashed border-destructive/20 bg-card p-8 text-center font-mono">
       <div className="mb-4 text-4xl">⚠️</div>
       <h1 className="mb-4 text-2xl font-semibold text-foreground">
         Verification Failed
@@ -85,7 +85,7 @@ export default function VerifyContent() {
       <p className="mb-6 text-muted-foreground">{errorMessage}</p>
       <button
         onClick={() => router.push("/login")}
-        className="rounded-md bg-primary px-6 py-3 font-medium text-primary-foreground transition-all hover:bg-primary/90 active:scale-95"
+        className="border border-dashed border-primary bg-primary px-6 py-3 font-medium text-primary-foreground transition-all hover:bg-primary/90 active:scale-95 font-mono"
       >
         Back to login
       </button>

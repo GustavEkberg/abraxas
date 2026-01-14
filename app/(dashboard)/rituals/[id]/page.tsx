@@ -90,7 +90,7 @@ function DroppableColumn({
   return (
     <div
       ref={setNodeRef}
-      className={`flex min-w-[280px] flex-col rounded-lg border bg-zinc-950/50 p-4 transition-colors ${
+      className={`flex min-w-[280px] flex-col border border-dashed bg-zinc-950/50 p-4 transition-colors font-mono ${
         isOver ? "border-purple-500/40 bg-zinc-900/50" : ""
       }`}
       style={{
@@ -131,12 +131,12 @@ function DraggableCard({
   const isCompleted = invocation.executionState === "completed";
 
   const borderColor = isExecuting
-    ? "border-cyan-500/40"
+    ? "border-cyan-500/40 border-dashed"
     : isError
-      ? "border-red-500/40"
+      ? "border-red-500/40 border-dashed"
       : isCompleted
-        ? "border-green-500/40"
-        : "border-white/10";
+        ? "border-green-500/40 border-dashed"
+        : "border-white/20 border-dashed";
 
   const bgColor = isExecuting
     ? "bg-cyan-950/20"
@@ -151,7 +151,7 @@ function DraggableCard({
       {...attributes}
       {...listeners}
       onClick={() => onClick(invocation)}
-      className={`cursor-grab p-4 transition-all duration-200 hover:border-white/20 hover:bg-zinc-800 ${borderColor} ${bgColor} ${
+      className={`cursor-grab p-4 transition-all duration-200 hover:border-white/30 hover:bg-zinc-800 font-mono ${borderColor} ${bgColor} ${
         isDragging ? "opacity-50" : ""
       }`}
     >
@@ -439,7 +439,7 @@ export default function RitualBoardPage({
       <div className="mb-6">
         <button
           onClick={() => router.push("/")}
-          className="mb-4 text-sm text-white/60 transition-colors hover:text-white/90"
+          className="mb-4 text-sm text-white/60 transition-colors hover:text-white/90 font-mono"
         >
           ← Return to Chamber
         </button>
@@ -455,7 +455,7 @@ export default function RitualBoardPage({
           </div>
           <button
             onClick={() => setShowCreateDialog(true)}
-            className="rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-purple-700 active:scale-95"
+            className="border border-dashed border-purple-500 bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-purple-700 active:scale-95 font-mono"
           >
             Invoke New Invocation
           </button>
@@ -475,7 +475,7 @@ export default function RitualBoardPage({
                   <h2 className="text-lg font-semibold text-white/90">
                     {column.title}
                   </h2>
-                  <span className="rounded-full bg-white/5 px-2 py-1 text-xs text-white/60">
+                  <span className="border border-dashed border-white/20 bg-white/5 px-2 py-1 text-xs text-white/60 font-mono">
                     {columnInvocations.length}
                   </span>
                 </div>
@@ -487,7 +487,7 @@ export default function RitualBoardPage({
               {/* Invocations */}
               <div className="flex-1 space-y-3">
                 {columnInvocations.length === 0 ? (
-                  <div className="rounded-md border border-dashed border-white/10 p-8 text-center text-sm text-white/30">
+                  <div className="border border-dashed border-white/20 p-8 text-center text-sm text-white/30 font-mono">
                     Empty
                   </div>
                 ) : (

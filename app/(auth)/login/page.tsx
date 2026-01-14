@@ -37,7 +37,7 @@ export default function LoginPage() {
 
   if (isSubmitted) {
     return (
-      <div className="rounded-lg border border-border bg-card p-8 text-center">
+      <div className="border border-dashed border-border bg-card p-8 text-center font-mono">
         <div className="mb-4 text-4xl">✉️</div>
         <h1 className="mb-4 text-2xl font-semibold text-foreground">
           Check your email
@@ -59,7 +59,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="rounded-lg border border-border bg-card p-8">
+    <div className="border border-dashed border-border bg-card p-8 font-mono">
       <div className="mb-6 text-center">
         <h1 className="mb-2 text-3xl font-bold text-foreground">Abraxas</h1>
         <p className="text-muted-foreground">Enter the realm</p>
@@ -77,12 +77,12 @@ export default function LoginPage() {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
             required
-            className="w-full rounded-md border border-input bg-background px-4 py-3 text-foreground placeholder-muted-foreground transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full border border-dashed border-input bg-background px-4 py-3 text-foreground placeholder-muted-foreground transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-ring font-mono"
           />
         </div>
 
         {error && (
-          <div className="rounded-md border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
+          <div className="border border-dashed border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive font-mono">
             {error.message || "Something went wrong. Please try again."}
           </div>
         )}
@@ -90,7 +90,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={isPending || !email}
-          className="w-full rounded-md bg-primary px-4 py-3 font-medium text-primary-foreground transition-all hover:bg-primary/90 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full border border-dashed border-primary bg-primary px-4 py-3 font-medium text-primary-foreground transition-all hover:bg-primary/90 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 font-mono"
         >
           {isPending ? "Sending magic link..." : "Send magic link"}
         </button>
