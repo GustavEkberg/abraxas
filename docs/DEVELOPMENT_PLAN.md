@@ -4,7 +4,7 @@ This document outlines the technical architecture, implementation phases, and de
 
 ## Current Status
 
-**Phase:** Phase 1-3 Complete ✅ | Phase 4 Next 🎯
+**Phase:** Phase 1-4 Complete ✅ | Phase 5 Next 🎯
 
 **Last Updated:** January 14, 2026
 
@@ -41,25 +41,34 @@ This document outlines the technical architecture, implementation phases, and de
 - ✅ Effect-based task service layer
 - ✅ Status transitions on drag
 
+**Phase 4 - Comments & Feedback** ✅
+- ✅ Task detail modal with full task information
+- ✅ Comment component with user/agent styling (purple vs cyan)
+- ✅ Add comment form with validation
+- ✅ Comment API routes (GET, POST)
+- ✅ Display comments chronologically
+- ✅ User/agent attribution with timestamps
+- ✅ Effect-based comment service layer
+
 ### In Progress
-- 🔄 Task detail modal (view full task details)
+- None currently
 
 ### Next Steps
-1. **Phase 4 - Comments System** (current priority)
-   - Build comment component with user/agent styling
-   - Add comment form
-   - Comment API routes
-   - Display comments in task detail modal
-   
-2. **Phase 5 - Sprite Integration (Mock)**
-   - Stub Sprite service
+1. **Phase 5 - Sprite Integration (Mock)** (current priority)
+   - Stub Sprite service for task execution simulation
    - Progress indicators on tasks in "The Ritual"
    - Auto-status transitions on completion/error
+   - Mock agent comments with PR links
    
-3. **Missing from Phases 1-3**
+2. **Phase 6 - GitHub Integration**
+   - Feature branch creation
+   - PR linking to tasks
+   - GitHub API integration
+   
+3. **Deferred Items**
    - GitHub PAT encryption utilities
    - Repository path validation
-   - Tests for existing features
+   - Comprehensive tests for all features
 
 ## Table of Contents
 
@@ -771,33 +780,37 @@ const createFeatureBranch = (task: Task, project: Project): Effect.Effect<string
 
 ---
 
-### Phase 4: Comments & Feedback (Week 4) 🎯 CURRENT PRIORITY
+### Phase 4: Comments & Feedback (Week 4) ✅ COMPLETE
 
 **Goals:** Comment threads, user-agent communication
 
 **Tasks:**
-1. ⬜ Task detail modal (expand to view full task + comments)
-2. ⬜ Comment component (user vs agent styling)
-3. ⬜ Add comment form
-4. ⬜ Display comments in task detail
-5. ⬜ Comment CRUD operations (Effect-based)
-6. ⬜ Auto-add agent comments (mock)
+1. ✅ Task detail modal (expand to view full task + comments)
+2. ✅ Comment component (user vs agent styling)
+3. ✅ Add comment form
+4. ✅ Display comments in task detail
+5. ✅ Comment CRUD operations (Effect-based)
+6. ⬜ Auto-add agent comments (mock) (deferred to Phase 5)
 7. ⬜ Tests for comment system (deferred)
 
 **Deliverables:**
-- ⬜ Task detail modal with full view
-- ⬜ Working comment threads
-- ⬜ Visual distinction between user/agent comments
-- ⬜ Feedback loop ready for Sprite integration
+- ✅ Task detail modal with full view
+- ✅ Working comment threads
+- ✅ Visual distinction between user/agent comments
+- ✅ Feedback loop ready for Sprite integration
 
-**Implementation Plan:**
-- Task detail modal (shadcn/ui dialog)
-- Comment list with chronological order
-- User comments: left-aligned, purple accent
-- Agent comments: right-aligned, cyan accent
-- Markdown support for comment content
-- API routes: GET /api/rituals/[id]/tasks/[taskId]/comments, POST /api/rituals/[id]/tasks/[taskId]/comments
-- Effect-based service layer (`lib/effects/comments.ts` already exists)
+**Implementation Notes:**
+- Task detail modal (`components/invocations/task-detail-modal.tsx`)
+- Comment component (`components/invocations/comment.tsx`)
+- Add comment form (`components/invocations/add-comment-form.tsx`)
+- API routes: GET/POST /api/rituals/[id]/tasks/[taskId]/comments
+- Effect-based service layer (`lib/effects/comments.ts`)
+- Click task card to open detail modal
+- Comments display chronologically with relative timestamps (date-fns)
+- User comments: left-aligned, purple-950/30 bg, purple-500/20 border, purple-400 text
+- Agent comments: right-aligned, cyan-950/30 bg, cyan-500/20 border, cyan-400 text
+- Markdown-ready (whitespace-pre-wrap for formatting)
+- Agent comment creation ready for Sprite integration
 
 ---
 
