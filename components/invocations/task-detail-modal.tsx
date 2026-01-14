@@ -328,9 +328,9 @@ export function TaskDetailModal({
               <span className="rounded bg-cyan-500/10 px-3 py-1 text-cyan-400 text-sm">
                 {task.messageCount || 0} messages
               </span>
-              {(task.inputTokens !== undefined && task.outputTokens !== undefined) && (
+              {((task.inputTokens || 0) + (task.outputTokens || 0) > 0) && (
                 <span className="rounded bg-cyan-500/10 px-3 py-1 text-cyan-400 text-sm">
-                  {Math.round((task.inputTokens || 0) / 1000)}k input / {Math.round((task.outputTokens || 0) / 1000)}k output tokens
+                  {Math.round(((task.inputTokens || 0) + (task.outputTokens || 0)) / 1000)}k tokens
                 </span>
               )}
             </div>

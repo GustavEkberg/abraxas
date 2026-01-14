@@ -19,6 +19,7 @@ export type SessionProgressEvent =
   | { type: "status"; status: "idle" | "busy" | "retry"; retryInfo?: { attempt: number; message: string; next: number } }
   | { type: "question"; question: string }
   | { type: "message"; message: string }
+  | { type: "stats"; messageCount: number; inputTokens: number; outputTokens: number }
   | { type: "error"; error: string }
   | { type: "complete"; result: SessionCompletionResult };
 
@@ -65,9 +66,8 @@ export async function monitorSession(
       let lastMessageRole: "user" | "assistant" | undefined;
       let lastMessageText = "";
       let eventCount = 0;
-      let messageCount = 0;
-      let totalInputTokens = 0;
-      let totalOutputTokens = 0;
+      const seenMessageIds = new Set<string>();  // Track unique messages
+      const messageTokens = new Map<string, { input: number; output: number }>();  // Track tokens per message
 
       for await (const event of stream.stream) {
         eventCount++;
@@ -106,14 +106,23 @@ export async function monitorSession(
               if (status.type === "idle") {
                 console.log(`[session-monitor] Session ${sessionId} is idle. hasMessages=${hasMessages}, lastMessageRole=${lastMessageRole}`);
                 onProgress?.({ type: "status", status: "idle" });
-                
+
                 // Session is idle - check if it's complete
                 if (hasMessages && lastMessageRole === "assistant") {
                   console.log(`[session-monitor] Session ${sessionId} completed successfully`);
+
+                  // Calculate total tokens across all messages
+                  let totalInputTokens = 0;
+                  let totalOutputTokens = 0;
+                  for (const tokens of messageTokens.values()) {
+                    totalInputTokens += tokens.input || 0;
+                    totalOutputTokens += tokens.output || 0;
+                  }
+
                   return {
                     success: true,
                     summary: lastMessageText || "Task execution completed",
-                    messageCount,
+                    messageCount: seenMessageIds.size,
                     inputTokens: totalInputTokens,
                     outputTokens: totalOutputTokens,
                   };
@@ -141,10 +150,19 @@ export async function monitorSession(
             // Session became idle - final check for completion
             if (hasMessages && lastMessageRole === "assistant") {
               console.log(`[session-monitor] Session ${sessionId} completed via idle event`);
+
+              // Calculate total tokens across all messages
+              let totalInputTokens = 0;
+              let totalOutputTokens = 0;
+              for (const tokens of messageTokens.values()) {
+                totalInputTokens += tokens.input || 0;
+                totalOutputTokens += tokens.output || 0;
+              }
+
               return {
                 success: true,
                 summary: lastMessageText || "Task execution completed",
-                messageCount,
+                messageCount: seenMessageIds.size,
                 inputTokens: totalInputTokens,
                 outputTokens: totalOutputTokens,
               };
@@ -177,26 +195,49 @@ export async function monitorSession(
               typeof event.properties.info.id === "string" &&
               (event.properties.info.role === "user" || event.properties.info.role === "assistant")
             ) {
-              const messageInfo = event.properties.info as { 
-                id: string; 
-                role: "user" | "assistant"; 
+              const messageInfo = event.properties.info as {
+                id: string;
+                role: "user" | "assistant";
                 sessionID: string;
                 tokens?: { input: number; output: number; };
               };
               hasMessages = true;
               lastMessageRole = messageInfo.role;
-              messageCount++;
+
+              // Track unique messages
+              if (!seenMessageIds.has(messageInfo.id)) {
+                seenMessageIds.add(messageInfo.id);
+              }
+
               console.log(`[session-monitor] Message updated for session ${sessionId}: role=${messageInfo.role}, messageId=${messageInfo.id}`);
 
               // Collect token stats from assistant messages
               if (messageInfo.role === "assistant" && "tokens" in event.properties.info) {
                 const tokens = (event.properties.info as { tokens?: { input: number; output: number; } }).tokens;
                 if (tokens) {
-                  totalInputTokens += tokens.input || 0;
-                  totalOutputTokens += tokens.output || 0;
-                  console.log(`[session-monitor] Tokens: input=${tokens.input}, output=${tokens.output}, total: input=${totalInputTokens}, output=${totalOutputTokens}`);
+                  // Replace (not add) tokens for this message
+                  messageTokens.set(messageInfo.id, tokens);
+                  console.log(`[session-monitor] Tokens for message ${messageInfo.id}: input=${tokens.input}, output=${tokens.output}`);
                 }
               }
+
+              // Calculate total tokens across all messages
+              let totalInputTokens = 0;
+              let totalOutputTokens = 0;
+              for (const tokens of messageTokens.values()) {
+                totalInputTokens += tokens.input || 0;
+                totalOutputTokens += tokens.output || 0;
+              }
+
+              console.log(`[session-monitor] Total stats: ${seenMessageIds.size} messages, ${totalInputTokens} input tokens, ${totalOutputTokens} output tokens`);
+
+              // Emit stats update event
+              onProgress?.({
+                type: "stats",
+                messageCount: seenMessageIds.size,
+                inputTokens: totalInputTokens,
+                outputTokens: totalOutputTokens
+              });
 
               // Fetch the full message to get text content
               try {

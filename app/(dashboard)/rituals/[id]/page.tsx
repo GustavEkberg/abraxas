@@ -187,7 +187,7 @@ function DraggableCard({
          (invocation.inputTokens !== undefined && invocation.inputTokens > 0) ||
          (invocation.outputTokens !== undefined && invocation.outputTokens > 0) ? (
           <span className="rounded bg-cyan-500/10 px-1.5 py-0.5 text-cyan-400">
-            {invocation.messageCount || 0}m · {Math.round((invocation.inputTokens || 0) / 1000)}k/{Math.round((invocation.outputTokens || 0) / 1000)}k
+            {invocation.messageCount || 0}m · {Math.round(((invocation.inputTokens || 0) + (invocation.outputTokens || 0)) / 1000)}k
           </span>
         ) : null}
       </div>

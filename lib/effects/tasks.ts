@@ -80,18 +80,17 @@ export const listTasksWithStats = (projectId: string) =>
       orderBy: desc(opencodeSessions.createdAt),
     });
 
-    // Create a map of taskId -> session stats (most recent session wins)
+    // Create a map of taskId -> accumulated session stats (sum across all sessions)
     const sessionMap = new Map<string, { messageCount: number; inputTokens: number; outputTokens: number }>();
     for (const session of sessions) {
       if (taskIds.includes(session.taskId)) {
-        // Only set if we don't already have stats for this task (since we ordered by createdAt desc)
-        if (!sessionMap.has(session.taskId)) {
-          sessionMap.set(session.taskId, {
-            messageCount: session.messageCount || 0,
-            inputTokens: session.inputTokens || 0,
-            outputTokens: session.outputTokens || 0,
-          });
-        }
+        // Accumulate stats across all sessions for this task
+        const currentStats = sessionMap.get(session.taskId) || { messageCount: 0, inputTokens: 0, outputTokens: 0 };
+        sessionMap.set(session.taskId, {
+          messageCount: currentStats.messageCount + (session.messageCount || 0),
+          inputTokens: currentStats.inputTokens + (session.inputTokens || 0),
+          outputTokens: currentStats.outputTokens + (session.outputTokens || 0),
+        });
       }
     }
 

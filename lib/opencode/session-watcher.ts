@@ -60,6 +60,11 @@ export function startSessionWatcher(
                 console.error("Failed to post question comment:", error);
               });
             }
+          } else if (event.type === "stats") {
+            // Update session stats incrementally during execution
+            handleSessionStatsUpdate(sessionId, event.messageCount, event.inputTokens, event.outputTokens).catch((error) => {
+              console.error("Failed to update session stats:", error);
+            });
           } else if (event.type === "error") {
             console.error(`Session ${opencodeSessionId} error:`, event.error);
           }
@@ -205,6 +210,30 @@ async function handleSessionQuestion(
       Effect.provide(DrizzleLive),
       Effect.catchAll((error) => {
         console.error("Failed to post question comment:", error);
+        return Effect.void;
+      })
+    )
+  );
+}
+
+/**
+ * Handle incremental session stats updates during execution.
+ */
+async function handleSessionStatsUpdate(
+  sessionId: string,
+  messageCount: number,
+  inputTokens: number,
+  outputTokens: number
+): Promise<void> {
+  const program = Effect.gen(function* () {
+    yield* OpencodeSessions.updateSessionStats(sessionId, messageCount, inputTokens, outputTokens);
+  });
+
+  await Effect.runPromise(
+    program.pipe(
+      Effect.provide(DrizzleLive),
+      Effect.catchAll((error) => {
+        console.error("Failed to update session stats:", error);
         return Effect.void;
       })
     )
