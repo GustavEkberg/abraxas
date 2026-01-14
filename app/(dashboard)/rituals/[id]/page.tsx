@@ -2,6 +2,16 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { Card } from "@/components/ui/card";
 import { CreateInvocationDialog } from "@/components/invocations/create-invocation-dialog";
 
@@ -61,6 +71,70 @@ const COLUMNS = [
 ] as const;
 
 /**
+ * Droppable column component for drag-and-drop.
+ */
+function DroppableColumn({
+  id,
+  color,
+  children,
+}: {
+  id: string;
+  color: string;
+  children: React.ReactNode;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`flex min-w-[280px] flex-col rounded-lg border bg-zinc-950/50 p-4 transition-colors ${
+        isOver ? "border-purple-500/40 bg-zinc-900/50" : ""
+      }`}
+      style={{
+        borderColor: isOver
+          ? undefined
+          : color.replace("border-", "").replace("/", " / "),
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+/**
+ * Draggable invocation card component.
+ */
+function DraggableCard({ invocation }: { invocation: Invocation }) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } =
+    useDraggable({
+      id: invocation.id,
+    });
+
+  const style = transform
+    ? {
+        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+      }
+    : undefined;
+
+  return (
+    <Card
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className={`cursor-grab border-white/10 bg-zinc-900 p-4 transition-all duration-200 hover:border-white/20 hover:bg-zinc-800 ${
+        isDragging ? "opacity-50" : ""
+      }`}
+    >
+      <h3 className="mb-2 font-medium text-white/90">{invocation.title}</h3>
+      <p className="line-clamp-2 text-sm text-white/60">
+        {invocation.description}
+      </p>
+    </Card>
+  );
+}
+
+/**
  * Ritual board view with six mystical columns.
  * Displays all invocations organized by their status.
  */
@@ -75,6 +149,17 @@ export default function RitualBoardPage({
   const [invocations, setInvocations] = useState<Invocation[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [activeInvocation, setActiveInvocation] = useState<Invocation | null>(
+    null
+  );
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
 
   useEffect(() => {
     params.then((p) => setRitualId(p.id));
@@ -124,6 +209,64 @@ export default function RitualBoardPage({
     return invocations.filter((invocation) => invocation.status === status);
   };
 
+  const handleDragStart = (event: DragStartEvent) => {
+    const invocation = invocations.find((inv) => inv.id === event.active.id);
+    setActiveInvocation(invocation || null);
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveInvocation(null);
+
+    if (!over || !ritualId) return;
+
+    const invocationId = active.id as string;
+    const newStatus = over.id as string;
+
+    // Find the invocation
+    const invocation = invocations.find((inv) => inv.id === invocationId);
+    if (!invocation || invocation.status === newStatus) return;
+
+    // Optimistically update UI
+    setInvocations((prev) =>
+      prev.map((inv) =>
+        inv.id === invocationId ? { ...inv, status: newStatus } : inv
+      )
+    );
+
+    // Update via API
+    try {
+      const response = await fetch(
+        `/api/rituals/${ritualId}/tasks/${invocationId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: newStatus }),
+        }
+      );
+
+      if (!response.ok) {
+        // Revert on error
+        setInvocations((prev) =>
+          prev.map((inv) =>
+            inv.id === invocationId
+              ? { ...inv, status: invocation.status }
+              : inv
+          )
+        );
+        console.error("Failed to update invocation status");
+      }
+    } catch (error) {
+      // Revert on error
+      setInvocations((prev) =>
+        prev.map((inv) =>
+          inv.id === invocationId ? { ...inv, status: invocation.status } : inv
+        )
+      );
+      console.error("Failed to update invocation status:", error);
+    }
+  };
+
   if (loading || !ritual) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -133,7 +276,12 @@ export default function RitualBoardPage({
   }
 
   return (
-    <div className="min-h-screen p-6">
+    <DndContext
+      sensors={sensors}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
+      <div className="min-h-screen p-6">
       {/* Header */}
       <div className="mb-6">
         <button
@@ -167,11 +315,7 @@ export default function RitualBoardPage({
           const columnInvocations = getInvocationsByStatus(column.id);
 
           return (
-            <div
-              key={column.id}
-              className="flex min-w-[280px] flex-col rounded-lg border bg-zinc-950/50 p-4"
-              style={{ borderColor: column.color.replace("border-", "") }}
-            >
+            <DroppableColumn key={column.id} id={column.id} color={column.color}>
               {/* Column Header */}
               <div className="mb-4">
                 <div className="flex items-center justify-between">
@@ -195,21 +339,14 @@ export default function RitualBoardPage({
                   </div>
                 ) : (
                   columnInvocations.map((invocation) => (
-                    <Card
+                    <DraggableCard
                       key={invocation.id}
-                      className="cursor-pointer border-white/10 bg-zinc-900 p-4 transition-all duration-200 hover:border-white/20 hover:bg-zinc-800"
-                    >
-                      <h3 className="mb-2 font-medium text-white/90">
-                        {invocation.title}
-                      </h3>
-                      <p className="line-clamp-2 text-sm text-white/60">
-                        {invocation.description}
-                      </p>
-                    </Card>
+                      invocation={invocation}
+                    />
                   ))
                 )}
               </div>
-            </div>
+            </DroppableColumn>
           );
         })}
       </div>
@@ -224,5 +361,20 @@ export default function RitualBoardPage({
         />
       )}
     </div>
+
+    {/* Drag Overlay */}
+    <DragOverlay>
+      {activeInvocation ? (
+        <Card className="cursor-grabbing border-white/20 bg-zinc-900 p-4 opacity-80">
+          <h3 className="mb-2 font-medium text-white/90">
+            {activeInvocation.title}
+          </h3>
+          <p className="line-clamp-2 text-sm text-white/60">
+            {activeInvocation.description}
+          </p>
+        </Card>
+      ) : null}
+    </DragOverlay>
+  </DndContext>
   );
 }
