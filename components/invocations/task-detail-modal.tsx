@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { Comment } from "./comment";
 import { AddCommentForm } from "./add-comment-form";
 
@@ -57,6 +58,8 @@ export function TaskDetailModal({
   const [loading, setLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState<string>("");
   const [updatingModel, setUpdatingModel] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const AVAILABLE_MODELS = [
     "grok-1",
@@ -136,16 +139,51 @@ export function TaskDetailModal({
     }
   }, [ritualId, task]);
 
+  const handleDelete = useCallback(async () => {
+    if (!task) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch(
+        `/api/rituals/${ritualId}/tasks/${task.id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to delete task");
+      }
+
+      setDeleteConfirmOpen(false);
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Failed to delete task:", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [ritualId, task, onOpenChange]);
+
   if (!task) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl lg:max-w-6xl max-h-[80vh] overflow-y-auto border-white/10 bg-zinc-950 text-white">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-white/90">
-            {task.title}
-          </DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-3xl lg:max-w-6xl max-h-[80vh] overflow-y-auto border-white/10 bg-zinc-950 text-white">
+          <DialogHeader className="flex flex-row items-center justify-between">
+            <DialogTitle className="text-2xl font-bold text-white/90">
+              {task.title}
+            </DialogTitle>
+            <Button
+              onClick={() => setDeleteConfirmOpen(true)}
+              variant="destructive"
+              size="sm"
+              disabled={isDeleting}
+              className="bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/20"
+            >
+              Delete
+            </Button>
+          </DialogHeader>
 
         {/* Task metadata */}
         <div className="mb-6 flex items-center gap-4 text-sm">
@@ -217,10 +255,44 @@ export function TaskDetailModal({
             </div>
           )}
 
-          {/* Add comment form */}
-          <AddCommentForm onSubmit={handleAddComment} />
-        </div>
-      </DialogContent>
-    </Dialog>
+           {/* Add comment form */}
+           <AddCommentForm onSubmit={handleAddComment} />
+         </div>
+       </DialogContent>
+     </Dialog>
+
+      {/* Delete confirmation dialog */}
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent className="max-w-sm border-white/10 bg-zinc-950 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-white/90">
+              Delete invocation
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-white/70">
+              Are you sure you want to delete this invocation? This action cannot be undone.
+            </p>
+          </div>
+          <div className="flex gap-3 justify-end">
+            <Button
+              onClick={() => setDeleteConfirmOpen(false)}
+              variant="outline"
+              className="border-white/10 text-white/70 hover:text-white"
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDelete}
+              className="bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/20"
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
