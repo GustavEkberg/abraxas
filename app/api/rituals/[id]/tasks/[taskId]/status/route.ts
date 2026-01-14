@@ -80,15 +80,19 @@ export async function GET(
 
     yield* Effect.tryPromise({
       try: async () => {
-        // Check and handle completion
+        // Check and handle completion - pass repository path for directory context
         await handleSessionCompletion(
           taskId,
           activeSession.id,
-          opencodeSessionId
+          opencodeSessionId,
+          ritual.repositoryPath
         )
 
-        // Check for questions
-        const question = await getSessionQuestion(opencodeSessionId)
+        // Check for questions - pass repository path for directory context
+        const question = await getSessionQuestion(
+          opencodeSessionId,
+          ritual.repositoryPath
+        )
         if (question) {
           await handleSessionQuestion(taskId, question)
         }

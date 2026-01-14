@@ -12,14 +12,20 @@ import { isSessionComplete } from "./session-monitor"
  * - Posts agent comment with results
  * - Updates task execution state
  * - Moves task to appropriate column (trial/cursed)
+ * 
+ * @param taskId - Task database ID
+ * @param sessionId - Session database ID
+ * @param opencodeSessionId - OpenCode SDK session ID
+ * @param directory - Repository directory path
  */
 export async function handleSessionCompletion(
   taskId: string,
   sessionId: string,
-  opencodeSessionId: string
+  opencodeSessionId: string,
+  directory: string
 ): Promise<void> {
-  // Check session completion
-  const result = await isSessionComplete(opencodeSessionId)
+  // Check session completion - must use same directory as session creation
+  const result = await isSessionComplete(opencodeSessionId, directory)
 
   if (!result.complete) {
     // Not complete yet, nothing to do

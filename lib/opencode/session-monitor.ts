@@ -9,16 +9,22 @@ import type { Session } from "@opencode-ai/sdk";
  * - Session has messages
  * - Last message is from assistant (not user)
  * - No active tool use in progress
+ * 
+ * @param sessionId - OpenCode session ID
+ * @param directory - Repository directory path (must match the directory used when creating the session)
  */
-export async function isSessionComplete(sessionId: string): Promise<{
+export async function isSessionComplete(
+  sessionId: string,
+  directory?: string
+): Promise<{
   complete: boolean;
   success: boolean;
   summary?: string;
   error?: string;
 }> {
   try {
-    // Get session and messages
-    const client = opencodeClient();
+    // Get session and messages - use same directory context as session creation
+    const client = opencodeClient(directory);
     const [sessionResp, messagesResp] = await Promise.all([
       client.session.get({ path: { id: sessionId } }),
       client.session.messages({ path: { id: sessionId } }),
@@ -81,12 +87,16 @@ export async function isSessionComplete(sessionId: string): Promise<{
  * Check if the session has a question that needs user input.
  * 
  * Returns the question text if found.
+ * 
+ * @param sessionId - OpenCode session ID
+ * @param directory - Repository directory path (must match the directory used when creating the session)
  */
 export async function getSessionQuestion(
-  sessionId: string
+  sessionId: string,
+  directory?: string
 ): Promise<string | null> {
   try {
-    const client = opencodeClient();
+    const client = opencodeClient(directory);
     const messagesResp = await client.session.messages({
       path: { id: sessionId },
     });
