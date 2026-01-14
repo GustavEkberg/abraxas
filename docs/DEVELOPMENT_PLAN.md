@@ -66,6 +66,7 @@ This document outlines the technical architecture, implementation phases, and de
 - ✅ Implement status polling endpoint (`GET /api/rituals/[id]/tasks/[taskId]/status`)
 - ✅ Auto-move tasks to Trial/Cursed on completion/error
 - ✅ Post agent comments with execution results
+- ✅ Fix event subscription persistence across page refreshes (localStorage)
 
 ### In Progress
 - None - Phase 6 in progress (GitHub integration nearly complete)

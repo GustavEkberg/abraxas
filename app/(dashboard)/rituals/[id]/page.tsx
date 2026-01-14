@@ -77,6 +77,46 @@ const COLUMNS = [
   },
 ] as const;
 
+// localStorage key for persisting running tasks across page refreshes
+const RUNNING_TASKS_STORAGE_KEY = "abraxas_running_tasks";
+
+/**
+ * Get persisted running task IDs from localStorage
+ */
+function getPersistedRunningTasks(ritualId: string): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const stored = localStorage.getItem(`${RUNNING_TASKS_STORAGE_KEY}_${ritualId}`);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Persist running task IDs to localStorage
+ */
+function persistRunningTasks(ritualId: string, taskIds: string[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(`${RUNNING_TASKS_STORAGE_KEY}_${ritualId}`, JSON.stringify(taskIds));
+  } catch (error) {
+    console.warn("Failed to persist running tasks:", error);
+  }
+}
+
+/**
+ * Remove persisted running tasks for a ritual
+ */
+function clearPersistedRunningTasks(ritualId: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(`${RUNNING_TASKS_STORAGE_KEY}_${ritualId}`);
+  } catch (error) {
+    console.warn("Failed to clear persisted running tasks:", error);
+  }
+}
+
 /**
  * Droppable column component for drag-and-drop.
  */
@@ -216,6 +256,7 @@ export default function RitualBoardPage({
   );
   const [selectedTask, setSelectedTask] = useState<Invocation | null>(null);
   const [showTaskDetail, setShowTaskDetail] = useState(false);
+  const [persistedRunningTasks, setPersistedRunningTasks] = useState<string[]>([]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -228,6 +269,14 @@ export default function RitualBoardPage({
   useEffect(() => {
     params.then((p) => setRitualId(p.id));
   }, [params]);
+
+  // Load persisted running tasks on mount
+  useEffect(() => {
+    if (ritualId) {
+      const persisted = getPersistedRunningTasks(ritualId);
+      setPersistedRunningTasks(persisted);
+    }
+  }, [ritualId]);
 
   const fetchRitual = useCallback(async () => {
     if (!ritualId) return;
@@ -297,11 +346,19 @@ export default function RitualBoardPage({
       }
     });
 
-    // Remove completed tasks from fire intensity
+    // Remove completed tasks from fire intensity and localStorage
     invocations
       .filter((inv) => inv.executionState !== "in_progress")
       .forEach((inv) => {
         removeRunningTask(inv.id);
+        // Remove from persisted running tasks
+        if (ritualId) {
+          setPersistedRunningTasks(prev => {
+            const updated = prev.filter(id => id !== inv.id);
+            persistRunningTasks(ritualId, updated);
+            return updated;
+          });
+        }
       });
   }, [invocations, addRunningTask, removeRunningTask, updateTaskMessages]);
 
@@ -309,19 +366,24 @@ export default function RitualBoardPage({
   useEffect(() => {
     if (!ritualId) return;
 
-    const runningInvocations = invocations.filter(
+    // Use both current running invocations and persisted ones to ensure immediate polling
+    const currentRunningInvocations = invocations.filter(
       (inv) => inv.executionState === "in_progress"
     );
+    const allRunningTaskIds = new Set([
+      ...currentRunningInvocations.map(inv => inv.id),
+      ...persistedRunningTasks
+    ]);
 
-    if (runningInvocations.length === 0) return;
+    if (allRunningTaskIds.size === 0) return;
 
     // Poll every 10 seconds for status updates
     const pollInterval = setInterval(async () => {
       let needsRefresh = false;
-      for (const inv of runningInvocations) {
+      for (const taskId of allRunningTaskIds) {
         try {
           const response = await fetch(
-            `/api/rituals/${ritualId}/tasks/${inv.id}/status`
+            `/api/rituals/${ritualId}/tasks/${taskId}/status`
           );
           if (response.ok) {
             needsRefresh = true;
@@ -338,7 +400,7 @@ export default function RitualBoardPage({
     }, 10000); // Poll every 10 seconds
 
     return () => clearInterval(pollInterval);
-  }, [ritualId, invocations, fetchInvocations]);
+  }, [ritualId, invocations, persistedRunningTasks, fetchInvocations]);
 
   const getInvocationsByStatus = (status: string) => {
     return invocations.filter((invocation) => invocation.status === status);
@@ -422,6 +484,13 @@ export default function RitualBoardPage({
               )
             );
             addRunningTask(invocationId);
+
+            // Persist running task to localStorage
+            setPersistedRunningTasks(prev => {
+              const updated = [...prev, invocationId];
+              persistRunningTasks(ritualId, updated);
+              return updated;
+            });
 
             // Refresh invocations to get updated comments
             await fetchInvocations();
