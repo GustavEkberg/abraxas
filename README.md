@@ -28,6 +28,7 @@ Abraxas is a Trello-like project management tool with AI-powered task execution.
 - Node.js 18+ 
 - pnpm 8+
 - Docker and Docker Compose (for local database)
+- **OpenCode** (`npm install -g opencode`) - Required for task execution
 
 ## Local Development Setup
 
@@ -66,14 +67,6 @@ To reset the database (deletes all data):
 docker compose down -v
 ```
 
-#### Option B: Local PostgreSQL
-
-If you have PostgreSQL installed locally:
-
-```bash
-createdb abraxas
-```
-
 ### 3. Configure Environment
 
 Copy the example environment file:
@@ -106,7 +99,17 @@ pnpm db:generate  # Generate migration files
 pnpm db:migrate   # Run migrations
 ```
 
-### 5. Start Development Server
+### 5. Start OpenCode Server
+
+**Required:** OpenCode must be running before using Abraxas task execution.
+
+```bash
+opencode serve --port 4096
+```
+
+Keep this running in a separate terminal. This enables autonomous task execution when you drag tasks to "The Ritual" column.
+
+### 6. Start Development Server
 
 ```bash
 pnpm dev
@@ -114,7 +117,7 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) to see the application.
 
-### 6. Explore Database (Optional)
+### 7. Explore Database (Optional)
 
 Open Drizzle Studio to browse your database:
 
@@ -123,6 +126,17 @@ pnpm db:studio
 ```
 
 This opens a GUI at [https://local.drizzle.studio](https://local.drizzle.studio).
+
+## OpenCode Integration
+
+Abraxas uses OpenCode with **Claude Sonnet 4.5** for autonomous task execution. When you drag a task to "The Ritual" column, OpenCode executes it using your repository's AGENTS.md configuration.
+
+**Monitor execution:**
+```bash
+opencode tui  # Real-time monitoring interface
+```
+
+The fire background intensifies as tasks run longer. Tasks auto-move to "The Trial" (success) or "Cursed" (error) when complete.
 
 ## Available Commands
 
@@ -214,6 +228,8 @@ Required environment variables (see `.env.example`):
 - `NODE_ENV` - Environment (development, production, test)
 - `BETTER_AUTH_SECRET` - Secret key for session encryption (generate with `openssl rand -base64 32`)
 - `NEXT_PUBLIC_APP_URL` - Base URL for the application (default: `http://localhost:3000`)
+- `OPENCODE_SERVER_URL` - OpenCode server URL (default: `http://localhost:4096`)
+- `ANTHROPIC_API_KEY` - Anthropic API key for Claude Sonnet 4.5 (required for task execution)
 
 ## Authentication
 
@@ -236,15 +252,4 @@ The `docker-compose.yml` provides:
 - Health checks for connection reliability
 - Pre-configured credentials for local development
 
-## Contributing
-
-1. Follow the code standards in [AGENTS.md](./AGENTS.md)
-2. Use strict TypeScript (no `any`, no type assertions)
-3. Use Effect for all async operations and error handling
-4. Default to Server Components, only use Client Components when needed
-5. Write tests for all features
-6. Run type checking and linting before committing
-
-## License
-
-Private project - all rights reserved.
+🔮

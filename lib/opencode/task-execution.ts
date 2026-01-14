@@ -1,23 +1,23 @@
-import { opencodeClient } from "./client"
-import type { Session, Message } from "@opencode-ai/sdk"
+import { opencodeClient } from "./client";
+import type { Session, Message } from "@opencode-ai/sdk";
 
 interface Task {
-  id: string
-  title: string
-  description: string
+  id: string;
+  title: string;
+  description: string;
 }
 
 interface Project {
-  id: string
-  name: string
-  repositoryPath: string
+  id: string;
+  name: string;
+  repositoryPath: string;
 }
 
 interface Comment {
-  content: string
-  isAgentComment: boolean
-  agentName?: string | null
-  createdAt: Date
+  content: string;
+  isAgentComment: boolean;
+  agentName?: string | null;
+  createdAt: Date;
 }
 
 /**
@@ -41,70 +41,76 @@ export async function executeTask(
     body: {
       title: `Task: ${task.title}`,
     },
-  })
+  });
 
-  const session = sessionResponse.data
+  const session = sessionResponse.data;
   if (!session?.id) {
-    throw new Error("Failed to create OpenCode session")
+    throw new Error("Failed to create OpenCode session");
   }
 
   // Build the context prompt from task + comments
-  const contextParts: string[] = []
+  const contextParts: string[] = [];
 
   // Add task details
-  contextParts.push(`# Task: ${task.title}\n`)
-  contextParts.push(`## Description\n${task.description}\n`)
+  contextParts.push(`# Task: ${task.title}\n`);
+  contextParts.push(`## Description\n${task.description}\n`);
 
   // Add comment history for context
   if (comments.length > 0) {
-    contextParts.push(`## Comment History\n`)
+    contextParts.push(`## Comment History\n`);
     comments.forEach((comment) => {
       const author = comment.isAgentComment
         ? comment.agentName || "Agent"
-        : "User"
+        : "User";
       contextParts.push(
         `**${author}** (${new Date(comment.createdAt).toLocaleString()}):\n${comment.content}\n`
-      )
-    })
+      );
+    });
   }
 
-  const promptText = contextParts.join("\n")
+  const promptText = contextParts.join("\n");
 
-  // Send the initial prompt to OpenCode with Abraxas agent
+  // Send the initial prompt to OpenCode with Abraxas agent and Claude Sonnet 4.5
   // The agent parameter tells OpenCode to use the Abraxas task execution agent
   // OpenCode will also read AGENTS.md from the repository automatically
   await opencodeClient.session.prompt({
     path: { id: session.id },
     body: {
       agent: "abraxas-task-executor",
+      model: {
+        // providerID: "anthropic",
+        providerID: "opencode",
+        //modelID: "claude-sonnet-4-5-20250929",
+        modelID: "grok-code",
+      },
       parts: [{ type: "text", text: promptText }],
     },
-  })
+  });
 
-  return session.id
+  return session.id;
 }
 
 /**
  * Get the status and messages of an OpenCode session.
  */
 export async function getSessionStatus(sessionId: string): Promise<{
-  session: Session
-  messages: Array<{ info: Message; parts: unknown[] }>
+  session: Session;
+  messages: Array<{ info: Message; parts: unknown[]; }>;
 }> {
   const [sessionResp, messagesResp] = await Promise.all([
     opencodeClient.session.get({ path: { id: sessionId } }),
     opencodeClient.session.messages({ path: { id: sessionId } }),
-  ])
+  ]);
 
   return {
     session: sessionResp.data!,
     messages: messagesResp.data || [],
-  }
+  };
 }
 
 /**
  * Abort a running OpenCode session.
  */
 export async function abortSession(sessionId: string): Promise<void> {
-  await opencodeClient.session.abort({ path: { id: sessionId } })
+  await opencodeClient.session.abort({ path: { id: sessionId } });
 }

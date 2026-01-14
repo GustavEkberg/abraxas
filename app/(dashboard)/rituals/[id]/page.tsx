@@ -15,6 +15,7 @@ import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { Card } from "@/components/ui/card";
 import { CreateInvocationDialog } from "@/components/invocations/create-invocation-dialog";
 import { TaskDetailModal } from "@/components/invocations/task-detail-modal";
+import { useFireIntensity } from "@/lib/contexts/fire-intensity-context";
 
 interface Ritual {
   id: string;
@@ -123,6 +124,25 @@ function DraggableCard({
       }
     : undefined;
 
+  // Determine visual styling based on execution state
+  const isExecuting = invocation.executionState === "in_progress";
+  const isError = invocation.executionState === "error";
+  const isCompleted = invocation.executionState === "completed";
+
+  const borderColor = isExecuting
+    ? "border-cyan-500/40"
+    : isError
+      ? "border-red-500/40"
+      : isCompleted
+        ? "border-green-500/40"
+        : "border-white/10";
+
+  const bgColor = isExecuting
+    ? "bg-cyan-950/20"
+    : isError
+      ? "bg-red-950/20"
+      : "bg-zinc-900";
+
   return (
     <Card
       ref={setNodeRef}
@@ -130,11 +150,25 @@ function DraggableCard({
       {...attributes}
       {...listeners}
       onClick={() => onClick(invocation)}
-      className={`cursor-grab border-white/10 bg-zinc-900 p-4 transition-all duration-200 hover:border-white/20 hover:bg-zinc-800 ${
+      className={`cursor-grab p-4 transition-all duration-200 hover:border-white/20 hover:bg-zinc-800 ${borderColor} ${bgColor} ${
         isDragging ? "opacity-50" : ""
       }`}
     >
-      <h3 className="mb-2 font-medium text-white/90">{invocation.title}</h3>
+      <div className="mb-2 flex items-center justify-between">
+        <h3 className="font-medium text-white/90">{invocation.title}</h3>
+        {isExecuting && (
+          <div className="flex items-center gap-1">
+            <div className="h-2 w-2 animate-pulse rounded-full bg-cyan-400" />
+            <span className="text-xs text-cyan-400">Executing</span>
+          </div>
+        )}
+        {isError && (
+          <span className="text-xs text-red-400">Error</span>
+        )}
+        {isCompleted && (
+          <span className="text-xs text-green-400">✓</span>
+        )}
+      </div>
       <p className="line-clamp-2 text-sm text-white/60">
         {invocation.description}
       </p>
@@ -152,6 +186,7 @@ export default function RitualBoardPage({
   params: Promise<{ id: string; }>;
 }) {
   const router = useRouter();
+  const { addRunningTask, removeRunningTask } = useFireIntensity();
   const [ritualId, setRitualId] = useState<string | null>(null);
   const [ritual, setRitual] = useState<Ritual | null>(null);
   const [invocations, setInvocations] = useState<Invocation[]>([]);
@@ -215,6 +250,55 @@ export default function RitualBoardPage({
     fetchInvocations();
   }, [ritualId, fetchRitual, fetchInvocations]);
 
+  // Sync running tasks with fire intensity context
+  useEffect(() => {
+    const runningInvocations = invocations.filter(
+      (inv) => inv.executionState === "in_progress"
+    );
+
+    // Add any new running tasks to fire intensity
+    runningInvocations.forEach((inv) => {
+      addRunningTask(inv.id);
+    });
+
+    // Remove completed tasks from fire intensity
+    invocations
+      .filter((inv) => inv.executionState !== "in_progress")
+      .forEach((inv) => {
+        removeRunningTask(inv.id);
+      });
+  }, [invocations, addRunningTask, removeRunningTask]);
+
+  // Poll for running task status updates
+  useEffect(() => {
+    if (!ritualId) return;
+
+    const runningInvocations = invocations.filter(
+      (inv) => inv.executionState === "in_progress"
+    );
+
+    if (runningInvocations.length === 0) return;
+
+    // Poll every 10 seconds for status updates
+    const pollInterval = setInterval(async () => {
+      for (const inv of runningInvocations) {
+        try {
+          const response = await fetch(
+            `/api/rituals/${ritualId}/tasks/${inv.id}/status`
+          );
+          if (response.ok) {
+            // Refresh invocations to get updated status
+            await fetchInvocations();
+          }
+        } catch (error) {
+          console.error("Failed to poll task status:", error);
+        }
+      }
+    }, 10000); // Poll every 10 seconds
+
+    return () => clearInterval(pollInterval);
+  }, [ritualId, invocations, fetchInvocations]);
+
   const getInvocationsByStatus = (status: string) => {
     return invocations.filter((invocation) => invocation.status === status);
   };
@@ -270,6 +354,59 @@ export default function RitualBoardPage({
           )
         );
         console.error("Failed to update invocation status");
+        return;
+      }
+
+      // If moved to "ritual" column, trigger execution
+      if (newStatus === "ritual") {
+        try {
+          const executeResponse = await fetch(
+            `/api/rituals/${ritualId}/tasks/${invocationId}/execute`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+            }
+          );
+
+          if (executeResponse.ok) {
+            const result = await executeResponse.json();
+            console.log("Execution started:", result);
+
+            // Update execution state and add to fire intensity
+            setInvocations((prev) =>
+              prev.map((inv) =>
+                inv.id === invocationId
+                  ? { ...inv, executionState: "in_progress" }
+                  : inv
+              )
+            );
+            addRunningTask(invocationId);
+
+            // Refresh invocations to get updated comments
+            await fetchInvocations();
+          } else {
+            const error = await executeResponse.json();
+            console.error("Failed to execute invocation:", error);
+            // Move to cursed on execution error
+            setInvocations((prev) =>
+              prev.map((inv) =>
+                inv.id === invocationId
+                  ? { ...inv, status: "cursed", executionState: "error" }
+                  : inv
+              )
+            );
+          }
+        } catch (executeError) {
+          console.error("Failed to execute invocation:", executeError);
+          // Move to cursed on execution error
+          setInvocations((prev) =>
+            prev.map((inv) =>
+              inv.id === invocationId
+                ? { ...inv, status: "cursed", executionState: "error" }
+                : inv
+            )
+          );
+        }
       }
     } catch (error) {
       // Revert on error

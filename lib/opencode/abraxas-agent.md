@@ -43,6 +43,8 @@ Each task you receive contains:
 - **ALWAYS read and follow the project's AGENTS.md first**
 - Use the project's existing patterns and conventions
 - Respect the technology stack already in place
+- Tasks should be small, if they are large, split them into smaller tasks and ask for confirmation before continuing
+- Never push directly to main, always create a new branch and create a pull request for review
 
 ## Completion Criteria
 
@@ -67,5 +69,3 @@ If you encounter errors or cannot complete the task:
 2. Describe what you tried
 3. Suggest next steps or alternatives
 4. Don't leave the codebase in a broken state
-
-Remember: You're working on real projects with real users. Take your time, be thorough, and deliver quality work.

@@ -2,7 +2,7 @@ import { pgTable, text, timestamp, uuid, pgEnum } from "drizzle-orm/pg-core"
 import { tasks } from "./tasks"
 
 /**
- * Session status for tracking Sprite.dev OpenCode execution.
+ * Session status for tracking OpenCode execution.
  */
 export const sessionStatusEnum = pgEnum("session_status", [
   "pending",
@@ -12,10 +12,9 @@ export const sessionStatusEnum = pgEnum("session_status", [
 ])
 
 /**
- * Sprite sessions table - tracks OpenCode execution sessions for tasks.
- * Stubbed for v1, will integrate with real Sprite.dev API later.
+ * OpenCode sessions table - tracks OpenCode execution sessions for tasks.
  */
-export const spriteSessions = pgTable("sprite_sessions", {
+export const opencodeSessions = pgTable("opencode_sessions", {
   id: uuid("id").primaryKey().defaultRandom(),
   taskId: uuid("task_id")
     .notNull()
@@ -31,6 +30,6 @@ export const spriteSessions = pgTable("sprite_sessions", {
   completedAt: timestamp("completed_at"),
 })
 
-export type SpriteSession = typeof spriteSessions.$inferSelect
-export type NewSpriteSession = typeof spriteSessions.$inferInsert
-export type SessionStatus = typeof spriteSessions.status.enumValues[number]
+export type OpencodeSession = typeof opencodeSessions.$inferSelect
+export type NewOpencodeSession = typeof opencodeSessions.$inferInsert
+export type SessionStatus = typeof opencodeSessions.status.enumValues[number]

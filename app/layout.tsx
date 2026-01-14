@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { AsciiFire } from "@/components/ascii-fire";
+import { FireIntensityProvider } from "@/lib/contexts/fire-intensity-context";
+import { FireBackground } from "@/components/fire-background";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,8 +29,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased relative min-h-screen`}
       >
-        <AsciiFire />
-        <div className="relative z-10">{children}</div>
+        <FireIntensityProvider>
+          <FireBackground />
+          <div className="relative z-10">{children}</div>
+        </FireIntensityProvider>
       </body>
     </html>
   );
