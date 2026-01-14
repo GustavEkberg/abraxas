@@ -67,8 +67,15 @@ This document outlines the technical architecture, implementation phases, and de
 - ✅ Auto-move tasks to Trial/Cursed on completion/error
 - ✅ Post agent comments with execution results
 
+### Bug Fixes
+- ✅ Fixed session completion bug: pass repository directory context
+  - OpenCode sessions are scoped to the directory they were created in
+  - Was calling `opencodeClient()` without directory when checking status, causing "Session not found" errors
+  - Fixed by passing `ritual.repositoryPath` throughout the session lifecycle
+  - Functions now accept optional `directory` parameter to maintain context consistency
+
 ### In Progress
-- None - Phase 5 complete, ready for Phase 6
+- None - Phase 5 complete, bug fixed, ready for Phase 6
 
 ### Next Steps
 1. **Phase 6 - GitHub Integration** (next priority)
