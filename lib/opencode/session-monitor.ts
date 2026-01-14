@@ -5,9 +5,9 @@ import { opencodeClient } from "./client";
  * 
  * A session is considered complete when:
  * - Session exists
+ * - Session status is "idle" (not "busy" or "retry")
  * - Session has messages
  * - Last message is from assistant (not user)
- * - No active tool use in progress
  * 
  * @param sessionId - OpenCode session ID
  * @param directory - Repository directory path (must match the directory used when creating the session)
@@ -22,13 +22,15 @@ export async function isSessionComplete(
   error?: string;
 }> {
   try {
-    // Get session and messages - use same directory context as session creation
+    // Get session status, session data, and messages - use same directory context as session creation
     const client = opencodeClient(directory);
-    const [sessionResp, messagesResp] = await Promise.all([
+    const [statusResp, sessionResp, messagesResp] = await Promise.all([
+      client.session.status({ query: { directory } }),
       client.session.get({ path: { id: sessionId } }),
       client.session.messages({ path: { id: sessionId } }),
     ]);
 
+    const sessionStatuses = statusResp.data;
     const session = sessionResp.data;
     const messages = messagesResp.data || [];
 
@@ -38,6 +40,13 @@ export async function isSessionComplete(
         success: false,
         error: "Session not found",
       };
+    }
+
+    // Check session status - only complete if status is "idle"
+    const sessionStatus = sessionStatuses?.[sessionId];
+    if (!sessionStatus || sessionStatus.type !== "idle") {
+      // Session is still busy or retrying
+      return { complete: false, success: false };
     }
 
     // If no messages yet, session is not complete
@@ -53,19 +62,7 @@ export async function isSessionComplete(
       return { complete: false, success: false };
     }
 
-    // Check if there are any tool calls in progress
-    // Tool calls with status "pending" or "running" indicate the session is still active
-    const hasActiveToolCalls = lastMessage.parts.some(
-      (part) =>
-        part.type === "tool" &&
-        (part.state.status === "pending" || part.state.status === "running")
-    );
-
-    if (hasActiveToolCalls) {
-      return { complete: false, success: false };
-    }
-
-    // Session is complete - extract summary from last message
+    // Session is complete and idle - extract summary from last message
     const textParts = lastMessage.parts.filter(part => part.type === "text");
     const summary = textParts.map(part => part.text).join("\n");
 
