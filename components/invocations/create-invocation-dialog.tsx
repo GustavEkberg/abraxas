@@ -87,8 +87,7 @@ export function CreateInvocationDialog({
             Cast New Invocation
           </DialogTitle>
           <DialogDescription className="text-white/60">
-            Summon a new invocation to The Abyss. Keep it simple - just title
-            and description.
+            Summon a new invocation to The Abyss.
           </DialogDescription>
         </DialogHeader>
 

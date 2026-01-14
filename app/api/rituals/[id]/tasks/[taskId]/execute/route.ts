@@ -74,6 +74,9 @@ export async function POST(
       status: "pending",
     });
 
+    // Update task execution state to in_progress
+    yield* Tasks.updateTask(taskId, { executionState: "in_progress" });
+
     // Execute task with OpenCode (wrapped in tryPromise since it's not Effect-based yet)
     const opencodeSessionId = yield* Effect.tryPromise({
       try: async () => {
@@ -113,9 +116,6 @@ export async function POST(
       },
     });
     console.log("opencodeSessionId:", opencodeSessionId);
-    // Update task execution state to in_progress
-    yield* Tasks.updateTask(taskId, { executionState: "in_progress" });
-
     // Update session with OpenCode session ID and set to in_progress
     yield* OpencodeSessions.updateSession(opencodeSession.id, {
       sessionId: opencodeSessionId,

@@ -38,13 +38,13 @@ Each task you receive contains:
 
 ## Working with the Repository
 
-- The repository path is provided by Abraxas
+- **NEVER try to install any new with brew or similar**
 - The repository has its own AGENTS.md with project-specific instructions
 - **ALWAYS read and follow the project's AGENTS.md first**
 - Use the project's existing patterns and conventions
-- Respect the technology stack already in place
 - Tasks should be small, if they are large, split them into smaller tasks and ask for confirmation before continuing
-- Never push directly to main, always create a new branch and create a pull request for review
+- **NEVER push directly to main**
+- **ALWAYS create a new branch and share a link to the new branch**
 
 ## Completion Criteria
 

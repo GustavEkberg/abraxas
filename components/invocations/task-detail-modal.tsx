@@ -1,39 +1,39 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Comment } from "./comment"
-import { AddCommentForm } from "./add-comment-form"
+} from "@/components/ui/dialog";
+import { Comment } from "./comment";
+import { AddCommentForm } from "./add-comment-form";
 
 interface Task {
-  id: string
-  title: string
-  description: string
-  status: string
-  executionState: string
-  createdAt: Date
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  executionState: string;
+  createdAt: Date;
 }
 
 interface Comment {
-  id: string
-  content: string
-  isAgentComment: boolean
-  agentName?: string | null
-  userId?: string | null
-  userName?: string | null
-  createdAt: Date
+  id: string;
+  content: string;
+  isAgentComment: boolean;
+  agentName?: string | null;
+  userId?: string | null;
+  userName?: string | null;
+  createdAt: Date;
 }
 
 interface TaskDetailModalProps {
-  task: Task | null
-  ritualId: string
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  task: Task | null;
+  ritualId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 /**
@@ -45,36 +45,36 @@ export function TaskDetailModal({
   open,
   onOpenChange,
 }: TaskDetailModalProps) {
-  const [comments, setComments] = useState<Comment[]>([])
-  const [loading, setLoading] = useState(false)
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (task && open) {
-      fetchComments()
-    }
-  }, [task, open])
+  const fetchComments = useCallback(async () => {
+    if (!task) return;
 
-  const fetchComments = async () => {
-    if (!task) return
-
-    setLoading(true)
+    setLoading(true);
     try {
       const response = await fetch(
         `/api/rituals/${ritualId}/tasks/${task.id}/comments`
-      )
+      );
       if (response.ok) {
-        const data = await response.json()
-        setComments(data)
+        const data = await response.json();
+        setComments(data);
       }
     } catch (error) {
-      console.error("Failed to fetch comments:", error)
+      console.error("Failed to fetch comments:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  }, [ritualId, task]);
 
-  const handleAddComment = async (content: string) => {
-    if (!task) return
+  useEffect(() => {
+    if (task && open) {
+      fetchComments();
+    }
+  }, [task, open, fetchComments]);
+
+  const handleAddComment = useCallback(async (content: string) => {
+    if (!task) return;
 
     const response = await fetch(
       `/api/rituals/${ritualId}/tasks/${task.id}/comments`,
@@ -83,20 +83,20 @@ export function TaskDetailModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content }),
       }
-    )
+    );
 
     if (response.ok) {
-      await fetchComments()
+      await fetchComments();
     } else {
-      throw new Error("Failed to post comment")
+      throw new Error("Failed to post comment");
     }
-  }
+  }, [ritualId, task, fetchComments]);
 
-  if (!task) return null
+  if (!task) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto border-white/10 bg-zinc-950 text-white">
+      <DialogContent className="max-w-3xl lg:max-w-6xl max-h-[80vh] overflow-y-auto border-white/10 bg-zinc-950 text-white">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-white/90">
             {task.title}
@@ -159,5 +159,5 @@ export function TaskDetailModal({
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

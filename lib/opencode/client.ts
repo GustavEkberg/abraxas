@@ -1,4 +1,4 @@
-import { createOpencodeClient } from "@opencode-ai/sdk"
+import { createOpencodeClient } from "@opencode-ai/sdk";
 
 /**
  * OpenCode client for connecting to local OpenCode server.
@@ -13,6 +13,7 @@ import { createOpencodeClient } from "@opencode-ai/sdk"
  * Environment variable:
  * - OPENCODE_SERVER_URL: URL of the OpenCode server (default: http://localhost:4096)
  */
-export const opencodeClient = createOpencodeClient({
+export const opencodeClient = (directory?: string) => createOpencodeClient({
   baseUrl: process.env.OPENCODE_SERVER_URL || "http://localhost:4096",
+  directory
 })

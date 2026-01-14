@@ -37,7 +37,8 @@ export async function executeTask(
   comments: Comment[]
 ): Promise<string> {
   // Create a new session for this task execution
-  const sessionResponse = await opencodeClient.session.create({
+  const client = opencodeClient(project.repositoryPath);
+  const sessionResponse = await client.session.create({
     body: {
       title: `Task: ${task.title}`,
     },
@@ -73,7 +74,7 @@ export async function executeTask(
   // Send the initial prompt to OpenCode with Abraxas agent and Claude Sonnet 4.5
   // The agent parameter tells OpenCode to use the Abraxas task execution agent
   // OpenCode will also read AGENTS.md from the repository automatically
-  await opencodeClient.session.prompt({
+  await client.session.prompt({
     path: { id: session.id },
     body: {
       agent: "abraxas-task-executor",
@@ -97,9 +98,10 @@ export async function getSessionStatus(sessionId: string): Promise<{
   session: Session;
   messages: Array<{ info: Message; parts: unknown[]; }>;
 }> {
+  const client = opencodeClient();
   const [sessionResp, messagesResp] = await Promise.all([
-    opencodeClient.session.get({ path: { id: sessionId } }),
-    opencodeClient.session.messages({ path: { id: sessionId } }),
+    client.session.get({ path: { id: sessionId } }),
+    client.session.messages({ path: { id: sessionId } }),
   ]);
 
   return {
@@ -112,5 +114,6 @@ export async function getSessionStatus(sessionId: string): Promise<{
  * Abort a running OpenCode session.
  */
 export async function abortSession(sessionId: string): Promise<void> {
-  await opencodeClient.session.abort({ path: { id: sessionId } });
+  const client = opencodeClient();
+  await client.session.abort({ path: { id: sessionId } });
 }
