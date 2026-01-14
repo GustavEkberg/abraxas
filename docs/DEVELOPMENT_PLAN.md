@@ -50,8 +50,21 @@ This document outlines the technical architecture, implementation phases, and de
 - ✅ User/agent attribution with timestamps
 - ✅ Effect-based comment service layer
 
+**Phase 5 - OpenCode SDK Integration** 🔄
+- ✅ Install @opencode-ai/sdk package
+- ✅ Create OpenCode client service (`lib/opencode/client.ts`)
+- ✅ Build task execution service (`lib/opencode/task-execution.ts`)
+- ✅ Create Abraxas agent configuration for OpenCode
+- ✅ Install agent to ~/.config/opencode/agent/
+- ✅ Document OpenCode integration setup and usage
+- ⬜ Rename `sprite_sessions` to `opencode_sessions` schema
+- ⬜ Create execution API route
+- ⬜ Update board UI to trigger execution on drag to Ritual
+- ⬜ Implement event stream monitoring
+- ⬜ Add progress indicators to UI
+
 ### In Progress
-- None currently
+- 🔄 Phase 5 - OpenCode SDK Integration (foundation complete, wiring up UI next)
 
 ### Next Steps
 1. **Phase 5 - OpenCode SDK Integration** (current priority)
@@ -822,18 +835,23 @@ const createFeatureBranch = (task: Task, project: Project): Effect.Effect<string
 **Goals:** Real AI-powered task execution via local OpenCode server
 
 **Tasks:**
-1. ⬜ Install @opencode-ai/sdk package
-2. ⬜ Create OpenCode client service (`lib/opencode/client.ts`)
-3. ⬜ Build task execution service (`lib/opencode/task-execution.ts`)
-4. ⬜ Implement event stream monitoring (`lib/opencode/events.ts`)
-5. ⬜ Create execution API route (`POST /api/rituals/[id]/tasks/[taskId]/execute`)
-6. ⬜ Update board UI for execution triggers
-7. ⬜ Rename `sprite_sessions` to `opencode_sessions`
-8. ⬜ Add progress indicators and real-time updates
+1. ✅ Install @opencode-ai/sdk package
+2. ✅ Create OpenCode client service (`lib/opencode/client.ts`)
+3. ✅ Build task execution service (`lib/opencode/task-execution.ts`)
+4. ✅ Create Abraxas agent configuration (`lib/opencode/abraxas-agent.md`)
+5. ✅ Document setup and prerequisites (`lib/opencode/README.md`)
+6. ⬜ Rename `sprite_sessions` to `opencode_sessions`
+7. ⬜ Create execution API route (`POST /api/rituals/[id]/tasks/[taskId]/execute`)
+8. ⬜ Update board UI for execution triggers
+9. ⬜ Implement event stream monitoring (`lib/opencode/events.ts`)
+10. ⬜ Add progress indicators and real-time updates
 
 **Deliverables:**
-- ⬜ OpenCode SDK integration working
-- ⬜ Real task execution with AI
+- ✅ OpenCode SDK client initialized (connects to localhost:4096)
+- ✅ Task execution service with context passing (title + description + comments)
+- ✅ Abraxas agent installed to OpenCode
+- ✅ Documentation for setup and usage
+- ⬜ Full execution flow working (API + UI integration)
 - ⬜ Event stream for live progress
 - ⬜ Agent comments auto-posted on completion/error
 
@@ -848,11 +866,13 @@ const createFeatureBranch = (task: Task, project: Project): Effect.Effect<string
 - On error: auto-move to "Cursed", post agent comment with error details
 
 **Key Files:**
-- `lib/opencode/client.ts` - Initialize OpenCode client/server
-- `lib/opencode/task-execution.ts` - Execute tasks with full context
-- `lib/opencode/events.ts` - Monitor event stream for progress
-- `app/api/rituals/[id]/tasks/[taskId]/execute/route.ts` - Trigger execution
-- Update `schemas/sprite-sessions.ts` → `schemas/opencode-sessions.ts`
+- ✅ `lib/opencode/client.ts` - OpenCode SDK client configuration
+- ✅ `lib/opencode/task-execution.ts` - Execute tasks with full context
+- ✅ `lib/opencode/abraxas-agent.md` - Agent configuration for task execution
+- ✅ `lib/opencode/README.md` - Setup and usage documentation
+- ⬜ `lib/opencode/events.ts` - Monitor event stream for progress (TODO)
+- ⬜ `app/api/rituals/[id]/tasks/[taskId]/execute/route.ts` - Trigger execution (TODO)
+- ⬜ `schemas/opencode-sessions.ts` - Rename from sprite-sessions (TODO)
 
 **Session Management:**
 - Create new OpenCode session per task execution (isolation)
