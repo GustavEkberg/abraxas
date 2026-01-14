@@ -14,6 +14,7 @@ import {
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { Card } from "@/components/ui/card";
 import { CreateInvocationDialog } from "@/components/invocations/create-invocation-dialog";
+import { TaskDetailModal } from "@/components/invocations/task-detail-modal";
 
 interface Ritual {
   id: string;
@@ -104,7 +105,13 @@ function DroppableColumn({
 /**
  * Draggable invocation card component.
  */
-function DraggableCard({ invocation }: { invocation: Invocation }) {
+function DraggableCard({ 
+  invocation, 
+  onClick 
+}: { 
+  invocation: Invocation;
+  onClick: (invocation: Invocation) => void;
+}) {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
       id: invocation.id,
@@ -122,6 +129,7 @@ function DraggableCard({ invocation }: { invocation: Invocation }) {
       style={style}
       {...attributes}
       {...listeners}
+      onClick={() => onClick(invocation)}
       className={`cursor-grab border-white/10 bg-zinc-900 p-4 transition-all duration-200 hover:border-white/20 hover:bg-zinc-800 ${
         isDragging ? "opacity-50" : ""
       }`}
@@ -152,6 +160,8 @@ export default function RitualBoardPage({
   const [activeInvocation, setActiveInvocation] = useState<Invocation | null>(
     null
   );
+  const [selectedTask, setSelectedTask] = useState<Invocation | null>(null);
+  const [showTaskDetail, setShowTaskDetail] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -212,6 +222,11 @@ export default function RitualBoardPage({
   const handleDragStart = (event: DragStartEvent) => {
     const invocation = invocations.find((inv) => inv.id === event.active.id);
     setActiveInvocation(invocation || null);
+  };
+
+  const handleTaskClick = (invocation: Invocation) => {
+    setSelectedTask(invocation);
+    setShowTaskDetail(true);
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -342,6 +357,7 @@ export default function RitualBoardPage({
                     <DraggableCard
                       key={invocation.id}
                       invocation={invocation}
+                      onClick={handleTaskClick}
                     />
                   ))
                 )}
@@ -358,6 +374,16 @@ export default function RitualBoardPage({
           open={showCreateDialog}
           onOpenChange={setShowCreateDialog}
           onInvocationCreated={fetchInvocations}
+        />
+      )}
+
+      {/* Task Detail Modal */}
+      {ritualId && (
+        <TaskDetailModal
+          task={selectedTask}
+          ritualId={ritualId}
+          open={showTaskDetail}
+          onOpenChange={setShowTaskDetail}
         />
       )}
     </div>

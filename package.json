@@ -26,6 +26,7 @@
     "better-auth": "^1.4.12",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "drizzle-orm": "^0.45.1",
     "effect": "^3.19.14",
     "lucide-react": "^0.562.0",
