@@ -43,6 +43,7 @@ interface TaskDetailModalProps {
   ritualId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onUpdate?: () => void;
 }
 
 /**
@@ -53,6 +54,7 @@ export function TaskDetailModal({
   ritualId,
   open,
   onOpenChange,
+  onUpdate,
 }: TaskDetailModalProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(false);
@@ -90,7 +92,7 @@ export function TaskDetailModal({
       }
     } catch (error) {
       console.error("Failed to fetch comments:", error);
-    } finally {
+     } finally {
       setLoading(false);
     }
   }, [ritualId, task]);
@@ -141,13 +143,15 @@ export function TaskDetailModal({
       if (!response.ok) {
         throw new Error("Failed to update task model");
       }
+
+      onUpdate?.();
     } catch (error) {
       console.error("Failed to update model:", error);
       setSelectedModel(task.model);
     } finally {
       setUpdatingModel(false);
     }
-  }, [ritualId, task]);
+  }, [ritualId, task, onUpdate]);
 
   const handleExecutionStateChange = useCallback(async (executionState: string) => {
     if (!task) return;
@@ -168,13 +172,15 @@ export function TaskDetailModal({
       if (!response.ok) {
         throw new Error("Failed to update task execution state");
       }
+
+      onUpdate?.();
     } catch (error) {
       console.error("Failed to update execution state:", error);
       setSelectedExecutionState(task.executionState);
     } finally {
       setUpdatingExecutionState(false);
     }
-  }, [ritualId, task]);
+  }, [ritualId, task, onUpdate]);
 
   const handleDelete = useCallback(async () => {
     if (!task) return;

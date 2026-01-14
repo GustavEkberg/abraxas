@@ -67,33 +67,28 @@ This document outlines the technical architecture, implementation phases, and de
 - ✅ Auto-move tasks to Trial/Cursed on completion/error
 - ✅ Post agent comments with execution results
 
-### Bug Fixes
-- ✅ Fixed session completion bug: pass repository directory context
-  - OpenCode sessions are scoped to the directory they were created in
-  - Was calling `opencodeClient()` without directory when checking status, causing "Session not found" errors
-  - Fixed by passing `ritual.repositoryPath` throughout the session lifecycle
-  - Functions now accept optional `directory` parameter to maintain context consistency
-
 ### In Progress
-- None - Phase 5 complete, bug fixed, ready for Phase 6
+- None - Phase 6 in progress (GitHub integration nearly complete)
 
 ### Next Steps
-1. **Phase 6 - GitHub Integration** (next priority)
-   - Feature branch creation via GitHub API
-   - PR linking to tasks
-   - GitHub API integration with Octokit
-   - Branch naming convention: `abraxas/task-{id}-{slugified-title}`
+1. **Phase 6 - GitHub Integration** (finishing up)
+   - ✅ GitHub API integration with Octokit
+   - ✅ Feature branch creation via GitHub API
+   - ✅ Branch naming convention: `abraxas/task-{id}-{slugified-title}`
+   - PR creation during task execution (agent-driven)
    
-2. **Phase 7 - Polish & Testing**
-   - Comprehensive E2E tests
-   - Performance optimization
-   - Mobile responsiveness verification
-   - UI refinements and animations
+2. **Phase 7 - Sprite.dev Infrastructure** (next priority)
+   - Research Sprite.dev API for remote execution
+   - Implement Sprite.dev client service
+   - Add Sprite.dev authentication and session management
+   - Support for cloud-based task execution
+   - Remote repository integration (GitHub URLs)
    
-3. **Phase 8 - Deployment**
+3. **Phase 8 - Vercel Deployment**
    - Vercel project setup
-   - PostgreSQL hosting configuration
+   - PostgreSQL hosting configuration (Vercel Postgres or Neon)
    - Environment variables setup
+   - Webhook endpoints for Sprite.dev events
    - Production deployment
    
 4. **Deferred Items (v2+)**
@@ -103,6 +98,9 @@ This document outlines the technical architecture, implementation phases, and de
    - Archive completed invocations
    - Multi-user support
    - Real-time board updates (WebSockets)
+   - Comprehensive E2E tests
+   - Performance optimization
+   - Mobile responsiveness verification
 
 ## Table of Contents
 

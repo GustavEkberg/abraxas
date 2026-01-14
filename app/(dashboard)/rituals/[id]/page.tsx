@@ -522,6 +522,7 @@ export default function RitualBoardPage({
           ritualId={ritualId}
           open={showTaskDetail}
           onOpenChange={setShowTaskDetail}
+          onUpdate={fetchInvocations}
         />
       )}
     </div>
