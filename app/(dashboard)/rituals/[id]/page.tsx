@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
+import { CreateInvocationDialog } from "@/components/invocations/create-invocation-dialog";
 
 interface Ritual {
   id: string;
@@ -74,6 +75,7 @@ export default function RitualBoardPage({
   const [ritual, setRitual] = useState<Ritual | null>(null);
   const [invocations, setInvocations] = useState<Invocation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   useEffect(() => {
     params.then((p) => setRitualId(p.id));
@@ -151,7 +153,10 @@ export default function RitualBoardPage({
               {ritual.repositoryPath}
             </p>
           </div>
-          <button className="rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-purple-700 active:scale-95">
+          <button
+            onClick={() => setShowCreateDialog(true)}
+            className="rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-purple-700 active:scale-95"
+          >
             Invoke New Invocation
           </button>
         </div>
@@ -216,6 +221,16 @@ export default function RitualBoardPage({
           );
         })}
       </div>
+
+      {/* Create Invocation Dialog */}
+      {ritualId && (
+        <CreateInvocationDialog
+          ritualId={ritualId}
+          open={showCreateDialog}
+          onOpenChange={setShowCreateDialog}
+          onInvocationCreated={fetchInvocations}
+        />
+      )}
     </div>
   );
 }
