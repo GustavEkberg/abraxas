@@ -95,9 +95,6 @@ export async function POST(
       title: body.title,
       description: body.description,
       status: body.status || "abyss",
-      priority: body.priority || null,
-      labels: body.labels || null,
-      dueDate: body.dueDate ? new Date(body.dueDate) : null,
     };
 
     const invocation = yield* Tasks.createTask(input);

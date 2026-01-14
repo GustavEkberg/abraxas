@@ -17,7 +17,6 @@ interface Invocation {
   title: string;
   description: string;
   status: string;
-  priority: string | null;
   executionState: string;
   createdAt: Date;
 }
@@ -206,13 +205,6 @@ export default function RitualBoardPage({
                       <p className="line-clamp-2 text-sm text-white/60">
                         {invocation.description}
                       </p>
-                      {invocation.priority && (
-                        <div className="mt-2">
-                          <span className="rounded-full bg-purple-500/20 px-2 py-1 text-xs text-purple-300">
-                            {invocation.priority}
-                          </span>
-                        </div>
-                      )}
                     </Card>
                   ))
                 )}

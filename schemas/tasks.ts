@@ -14,15 +14,6 @@ export const taskStatusEnum = pgEnum("task_status", [
 ])
 
 /**
- * Task priority levels.
- */
-export const taskPriorityEnum = pgEnum("task_priority", [
-  "low",
-  "medium",
-  "high",
-])
-
-/**
  * Task execution state.
  */
 export const taskExecutionStateEnum = pgEnum("task_execution_state", [
@@ -34,6 +25,7 @@ export const taskExecutionStateEnum = pgEnum("task_execution_state", [
 
 /**
  * Tasks table - individual task cards on the board.
+ * Following Ralph Wiggum methodology: minimal metadata, focus on what needs done.
  */
 export const tasks = pgTable("tasks", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -43,12 +35,9 @@ export const tasks = pgTable("tasks", {
   title: text("title").notNull(),
   description: text("description").notNull(),
   status: taskStatusEnum("status").notNull().default("abyss"),
-  priority: taskPriorityEnum("priority"),
   executionState: taskExecutionStateEnum("execution_state")
     .notNull()
     .default("idle"),
-  labels: text("labels").array(),
-  dueDate: timestamp("due_date"),
   completedAt: timestamp("completed_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -57,5 +46,4 @@ export const tasks = pgTable("tasks", {
 export type Task = typeof tasks.$inferSelect
 export type NewTask = typeof tasks.$inferInsert
 export type TaskStatus = typeof tasks.status.enumValues[number]
-export type TaskPriority = typeof tasks.priority.enumValues[number]
 export type TaskExecutionState = typeof tasks.executionState.enumValues[number]

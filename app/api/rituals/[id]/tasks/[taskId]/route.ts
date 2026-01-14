@@ -114,10 +114,6 @@ export async function PATCH(
     if (body.title !== undefined) updates.title = body.title;
     if (body.description !== undefined) updates.description = body.description;
     if (body.status !== undefined) updates.status = body.status;
-    if (body.priority !== undefined) updates.priority = body.priority;
-    if (body.labels !== undefined) updates.labels = body.labels;
-    if (body.dueDate !== undefined)
-      updates.dueDate = body.dueDate ? new Date(body.dueDate) : null;
     if (body.executionState !== undefined)
       updates.executionState = body.executionState;
 
