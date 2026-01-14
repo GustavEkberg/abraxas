@@ -1,4 +1,4 @@
-import { TaskModel } from "@/schemas";
+import { TaskModel, TaskType } from "@/schemas";
 import { getTaskModel } from "../utils";
 import { opencodeClient } from "./client";
 import type { Session, Message } from "@opencode-ai/sdk";
@@ -7,6 +7,7 @@ interface Task {
   id: string;
   title: string;
   description: string;
+  type: TaskType;
   model: TaskModel;
 }
 
@@ -57,6 +58,7 @@ export async function executeTask(
 
   // Add task details
   contextParts.push(`# Task: ${task.title}\n`);
+  contextParts.push(`**Type:** ${task.type.charAt(0).toUpperCase() + task.type.slice(1)}\n`);
   contextParts.push(`## Description\n${task.description}\n`);
 
   // Add comment history for context

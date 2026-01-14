@@ -113,6 +113,7 @@ export async function PATCH(
      const updates: Partial<NewTask> = {};
      if (body.title !== undefined) updates.title = body.title;
      if (body.description !== undefined) updates.description = body.description;
+     if (body.type !== undefined) updates.type = body.type;
      if (body.status !== undefined) updates.status = body.status;
      if (body.executionState !== undefined)
        updates.executionState = body.executionState;

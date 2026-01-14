@@ -22,6 +22,7 @@ interface Task {
   id: string;
   title: string;
   description: string;
+  type: string;
   status: string;
   executionState: string;
   model: string;
@@ -58,12 +59,21 @@ export function TaskDetailModal({
 }: TaskDetailModalProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedType, setSelectedType] = useState<string>("");
+  const [updatingType, setUpdatingType] = useState(false);
   const [selectedModel, setSelectedModel] = useState<string>("");
   const [updatingModel, setUpdatingModel] = useState(false);
   const [selectedExecutionState, setSelectedExecutionState] = useState<string>("");
   const [updatingExecutionState, setUpdatingExecutionState] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const AVAILABLE_TYPES = [
+    "bug",
+    "feature",
+    "plan",
+    "other",
+  ];
 
   const AVAILABLE_MODELS = [
     "grok-1",
@@ -101,6 +111,7 @@ export function TaskDetailModal({
   useEffect(() => {
     if (task && open) {
       fetchComments();
+      setSelectedType(task.type);
       setSelectedModel(task.model);
       setSelectedExecutionState(task.executionState);
     }
@@ -124,6 +135,35 @@ export function TaskDetailModal({
       throw new Error("Failed to post comment");
     }
   }, [ritualId, task, fetchComments]);
+
+  const handleTypeChange = useCallback(async (type: string) => {
+    if (!task) return;
+
+    setSelectedType(type);
+    setUpdatingType(true);
+
+    try {
+      const response = await fetch(
+        `/api/rituals/${ritualId}/tasks/${task.id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update task type");
+      }
+
+      onUpdate?.();
+    } catch (error) {
+      console.error("Failed to update type:", error);
+      setSelectedType(task.type);
+    } finally {
+      setUpdatingType(false);
+    }
+  }, [ritualId, task, onUpdate]);
 
   const handleModelChange = useCallback(async (model: string) => {
     if (!task) return;
@@ -230,11 +270,37 @@ export function TaskDetailModal({
           </DialogHeader>
 
           {/* Task metadata */}
-          <div className="mb-6 flex items-center gap-4">
+          <div className="mb-6 flex items-center gap-4 flex-wrap">
             <span className="text-sm text-white/60">Status:</span>
             <span className="rounded-full bg-purple-500/20 px-3 py-1 text-purple-400 text-sm">
               {task.status}
             </span>
+            <span className="text-sm text-white/60 ml-4">Type:</span>
+            <Select value={selectedType} onValueChange={handleTypeChange} disabled={updatingType}>
+              <SelectTrigger className="w-fit border-white/10 bg-zinc-900/50">
+                <SelectValue placeholder="Select type" />
+              </SelectTrigger>
+              <SelectContent className="border-white/10 bg-zinc-950">
+                {AVAILABLE_TYPES.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type.charAt(0).toUpperCase() + type.slice(1)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <span className="text-sm text-white/60 ml-4">Model:</span>
+            <Select value={selectedModel} onValueChange={handleModelChange} disabled={updatingModel}>
+              <SelectTrigger className="w-fit border-white/10 bg-zinc-900/50">
+                <SelectValue placeholder="Select model" />
+              </SelectTrigger>
+              <SelectContent className="border-white/10 bg-zinc-950">
+                {AVAILABLE_MODELS.map((model) => (
+                  <SelectItem key={model} value={model}>
+                    {model}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <span className="text-sm text-white/60 ml-4">Execution State:</span>
             <Select value={selectedExecutionState} onValueChange={handleExecutionStateChange} disabled={updatingExecutionState}>
               <SelectTrigger className="w-fit border-white/10 bg-zinc-900/50">
@@ -258,25 +324,6 @@ export function TaskDetailModal({
             <div className="rounded-lg border border-white/10 bg-zinc-900/50 p-4 text-white/80 whitespace-pre-wrap">
               {task.description}
             </div>
-          </div>
-
-          {/* Task model */}
-          <div className="mb-8">
-            <h3 className="mb-2 text-sm font-medium text-white/60">
-              Task model
-            </h3>
-            <Select value={selectedModel} onValueChange={handleModelChange} disabled={updatingModel}>
-              <SelectTrigger className="w-full border-white/10 bg-zinc-900/50">
-                <SelectValue placeholder="Select a model" />
-              </SelectTrigger>
-              <SelectContent className="border-white/10 bg-zinc-950">
-                {AVAILABLE_MODELS.map((model) => (
-                  <SelectItem key={model} value={model}>
-                    {model}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
 
           {/* Comments section */}

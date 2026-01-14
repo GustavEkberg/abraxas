@@ -28,6 +28,7 @@ interface Invocation {
   id: string;
   title: string;
   description: string;
+  type: string;
   status: string;
   executionState: string;
   model: string;
@@ -55,7 +56,7 @@ const COLUMNS = [
   },
   {
     id: "cursed",
-    title: "Cursed",
+    title: "The Cursed",
     description: "Blocked with errors",
     color: "border-red-500/20",
   },
@@ -67,7 +68,7 @@ const COLUMNS = [
   },
   {
     id: "vanquished",
-    title: "Vanquished",
+    title: "The Vanquished",
     description: "Returned to the Void",
     color: "border-green-500/20",
   },
@@ -171,6 +172,14 @@ function DraggableCard({
       <p className="line-clamp-2 text-sm text-white/60">
         {invocation.description}
       </p>
+      <div className="mt-2 flex items-center gap-2 text-xs text-white/40">
+        <span className="rounded bg-purple-500/10 px-1.5 py-0.5 text-purple-400">
+          {invocation.type}
+        </span>
+        <span className="rounded bg-white/5 px-1.5 py-0.5">
+          {invocation.model}
+        </span>
+      </div>
     </Card>
   );
 }
@@ -453,9 +462,9 @@ export default function RitualBoardPage({
             </div>
             <button
               onClick={() => setShowCreateDialog(true)}
-              className="border border-dashed border-purple-500 bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-purple-700 active:scale-95 font-mono"
+              className="border border-dashed border-red-500 bg-red-600 px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-red-700 hover:cursor-pointer active:scale-95 font-mono"
             >
-              Invoke New Invocation
+              Cast New Invocation
             </button>
           </div>
         </div>

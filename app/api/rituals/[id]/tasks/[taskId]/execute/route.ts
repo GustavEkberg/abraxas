@@ -86,6 +86,7 @@ export async function POST(
             id: task.id,
             title: task.title,
             description: task.description,
+            type: task.type,
             model: task.model,
           },
           {

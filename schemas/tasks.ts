@@ -24,6 +24,16 @@ export const taskExecutionStateEnum = pgEnum("task_execution_state", [
   "error",
 ]);
 
+/**
+ * Task type categorization.
+ */
+export const taskTypeEnum = pgEnum("task_type", [
+  "bug",
+  "feature",
+  "plan",
+  "other",
+]);
+
 export const taskModel = pgEnum("task_model", [
   "grok-1",
   "claude-sonnet-4-5",
@@ -41,6 +51,7 @@ export const tasks = pgTable("tasks", {
     .references(() => projects.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   description: text("description").notNull(),
+  type: taskTypeEnum("type").notNull().default("other"),
   model: taskModel("model").notNull().default("grok-1"),
   status: taskStatusEnum("status").notNull().default("abyss"),
   executionState: taskExecutionStateEnum("execution_state")
@@ -56,3 +67,4 @@ export type NewTask = typeof tasks.$inferInsert;
 export type TaskStatus = typeof tasks.status.enumValues[number];
 export type TaskExecutionState = typeof tasks.executionState.enumValues[number];
 export type TaskModel = typeof tasks.model.enumValues[number];
+export type TaskType = typeof tasks.type.enumValues[number];

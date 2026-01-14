@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TaskModel } from "@/schemas";
+import { TaskModel, TaskType } from "@/schemas";
 
 interface CreateInvocationDialogProps {
   ritualId: string;
@@ -41,9 +41,17 @@ export function CreateInvocationDialog({
 }: CreateInvocationDialogProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [type, setType] = useState<TaskType>("feature");
   const [model, setModel] = useState("grok-1");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const AVAILABLE_TYPES: TaskType[] = [
+    "bug",
+    "feature",
+    "plan",
+    "other",
+  ];
 
   const AVAILABLE_MODELS: TaskModel[] = [
     "grok-1",
@@ -54,6 +62,7 @@ export function CreateInvocationDialog({
   const resetForm = () => {
     setTitle("");
     setDescription("");
+    setType("feature");
     setModel("grok-1");
     setError(null);
   };
@@ -76,6 +85,7 @@ export function CreateInvocationDialog({
         body: JSON.stringify({
           title: title.trim(),
           description: description.trim(),
+          type,
           model,
         }),
       });
@@ -138,6 +148,25 @@ export function CreateInvocationDialog({
                 className="min-h-[120px] border-white/10 bg-zinc-900 text-white/90 placeholder:text-white/40"
                 required
               />
+            </div>
+
+            {/* Type */}
+            <div className="space-y-2">
+              <Label htmlFor="type" className="text-white/90">
+                Type
+              </Label>
+              <Select value={type} onValueChange={(value) => setType(value as TaskType)}>
+                <SelectTrigger className="border-white/10 bg-zinc-900">
+                  <SelectValue placeholder="Select a type" />
+                </SelectTrigger>
+                <SelectContent className="border-white/10 bg-zinc-950">
+                  {AVAILABLE_TYPES.map((taskType) => (
+                    <SelectItem key={taskType} value={taskType}>
+                      {taskType.charAt(0).toUpperCase() + taskType.slice(1)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Model */}

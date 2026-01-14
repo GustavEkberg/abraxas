@@ -94,6 +94,7 @@ export async function POST(
        projectId: id,
        title: body.title,
        description: body.description,
+       type: body.type || "other",
        model: body.model || "grok-1",
        status: body.status || "abyss",
      };
