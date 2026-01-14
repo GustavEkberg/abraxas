@@ -11,7 +11,7 @@ interface Ritual {
   repositoryPath: string;
 }
 
-interface Task {
+interface Invocation {
   id: string;
   title: string;
   description: string;
@@ -25,7 +25,7 @@ const COLUMNS = [
   {
     id: "abyss",
     title: "The Abyss",
-    description: "Tasks waiting in darkness",
+    description: "Invocations waiting in darkness",
     color: "border-white/10",
   },
   {
@@ -37,7 +37,7 @@ const COLUMNS = [
   {
     id: "ritual",
     title: "The Ritual",
-    description: "Active execution",
+    description: "Active invocations",
     color: "border-cyan-500/20",
   },
   {
@@ -62,7 +62,7 @@ const COLUMNS = [
 
 /**
  * Ritual board view with six mystical columns.
- * Displays all tasks organized by their status.
+ * Displays all invocations organized by their status.
  */
 export default function RitualBoardPage({
   params,
@@ -72,7 +72,7 @@ export default function RitualBoardPage({
   const router = useRouter();
   const [ritualId, setRitualId] = useState<string | null>(null);
   const [ritual, setRitual] = useState<Ritual | null>(null);
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [invocations, setInvocations] = useState<Invocation[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -94,18 +94,18 @@ export default function RitualBoardPage({
     }
   }, [ritualId, router]);
 
-  const fetchTasks = useCallback(async () => {
+  const fetchInvocations = useCallback(async () => {
     if (!ritualId) return;
     try {
       // TODO: Implement tasks API endpoint
       // const response = await fetch(`/api/rituals/${ritualId}/tasks`)
       // if (response.ok) {
       //   const data = await response.json()
-      //   setTasks(data)
+      //   setInvocations(data)
       // }
-      setTasks([]); // Empty for now
+      setInvocations([]); // Empty for now
     } catch (error) {
-      console.error("Failed to fetch tasks:", error);
+      console.error("Failed to fetch invocations:", error);
     } finally {
       setLoading(false);
     }
@@ -114,11 +114,11 @@ export default function RitualBoardPage({
   useEffect(() => {
     if (!ritualId) return;
     fetchRitual();
-    fetchTasks();
-  }, [ritualId, fetchRitual, fetchTasks]);
+    fetchInvocations();
+  }, [ritualId, fetchRitual, fetchInvocations]);
 
-  const getTasksByStatus = (status: string) => {
-    return tasks.filter((task) => task.status === status);
+  const getInvocationsByStatus = (status: string) => {
+    return invocations.filter((invocation) => invocation.status === status);
   };
 
   if (loading || !ritual) {
@@ -150,7 +150,7 @@ export default function RitualBoardPage({
             </p>
           </div>
           <button className="rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-purple-700 active:scale-95">
-            Invoke New Task
+            Invoke New Invocation
           </button>
         </div>
       </div>
@@ -158,7 +158,7 @@ export default function RitualBoardPage({
       {/* Board Columns */}
       <div className="grid grid-cols-6 gap-4 overflow-x-auto">
         {COLUMNS.map((column) => {
-          const columnTasks = getTasksByStatus(column.id);
+          const columnInvocations = getInvocationsByStatus(column.id);
 
           return (
             <div
@@ -173,7 +173,7 @@ export default function RitualBoardPage({
                     {column.title}
                   </h2>
                   <span className="rounded-full bg-white/5 px-2 py-1 text-xs text-white/60">
-                    {columnTasks.length}
+                    {columnInvocations.length}
                   </span>
                 </div>
                 <p className="mt-1 text-xs text-white/40">
@@ -181,28 +181,28 @@ export default function RitualBoardPage({
                 </p>
               </div>
 
-              {/* Tasks */}
+              {/* Invocations */}
               <div className="flex-1 space-y-3">
-                {columnTasks.length === 0 ? (
+                {columnInvocations.length === 0 ? (
                   <div className="rounded-md border border-dashed border-white/10 p-8 text-center text-sm text-white/30">
                     Empty
                   </div>
                 ) : (
-                  columnTasks.map((task) => (
+                  columnInvocations.map((invocation) => (
                     <Card
-                      key={task.id}
+                      key={invocation.id}
                       className="cursor-pointer border-white/10 bg-zinc-900 p-4 transition-all duration-200 hover:border-white/20 hover:bg-zinc-800"
                     >
                       <h3 className="mb-2 font-medium text-white/90">
-                        {task.title}
+                        {invocation.title}
                       </h3>
                       <p className="line-clamp-2 text-sm text-white/60">
-                        {task.description}
+                        {invocation.description}
                       </p>
-                      {task.priority && (
+                      {invocation.priority && (
                         <div className="mt-2">
                           <span className="rounded-full bg-purple-500/20 px-2 py-1 text-xs text-purple-300">
-                            {task.priority}
+                            {invocation.priority}
                           </span>
                         </div>
                       )}

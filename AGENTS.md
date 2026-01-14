@@ -1,12 +1,12 @@
 # Abraxas Agent Configuration
 
-Abraxas is a mystical project management interface that summons the power of OpenCode to solve development tasks. When tasks are dragged to "The Ritual" column, Abraxas spawns autonomous coding sessions that execute work and create pull requests.
+Abraxas is a mystical project management interface that summons the power of OpenCode to solve development invocations. When invocations are dragged to "The Ritual" column, Abraxas spawns autonomous coding sessions that execute work and create pull requests.
 
 ## Project Overview
 
-**Abraxas** is a Trello-like project management tool with AI-powered task execution:
-- Minimal, occult-themed UI for managing development tasks
-- Tasks progress through mystical columns from conception to completion
+**Abraxas** is a Trello-like project management tool with AI-powered invocation execution:
+- Minimal, occult-themed UI for managing development invocations
+- Invocations progress through mystical columns from conception to completion
 - Integration with Sprite.dev to spawn OpenCode sessions for autonomous task execution
 - Auto-generates feature branches and pull requests
 - Comment-based feedback loop between humans and agents
@@ -129,8 +129,8 @@ export function TaskCard({ task }: { task: Task }) {
   - GitHub Personal Access Token
   - Project-specific AGENTS.md (stored in the repo itself)
 
-### Tasks
-- Task cards with the following structure:
+### Invocations
+- Invocation cards with the following structure:
   - Title (required)
   - Description (markdown, required)
   - Priority (optional: high, medium, low)
@@ -138,52 +138,52 @@ export function TaskCard({ task }: { task: Task }) {
   - Due date (optional)
   - Comments thread (timestamped, from users and agents)
   - Metadata: creation timestamp, completion timestamp
-  - Status indicator: which column the task is in
+  - Status indicator: which column the invocation is in
   - Execution state: idle, in-progress (with progress indicator), completed, error
 
 ### Board Columns
-Tasks flow through these thematic columns:
+Invocations flow through these thematic columns:
 
-1. **The Abyss** - Backlog of tasks waiting in darkness
-2. **The Altar** - Tasks prepared and ready for execution
+1. **The Abyss** - Backlog of invocations waiting in darkness
+2. **The Altar** - Invocations prepared and ready for execution
 3. **The Summoning** - Active execution (triggers OpenCode/Sprite session)
-4. **Cursed** - Blocked tasks with errors
-5. **The Trial** - Completed tasks awaiting human review
-6. **Vanquished** - Successfully completed and approved tasks
+4. **Cursed** - Blocked invocations with errors
+5. **The Trial** - Completed invocations awaiting human review
+6. **Vanquished** - Successfully completed and approved invocations
 
-## Task Execution Flow
+## Invocation Execution Flow
 
 ### The Ritual (Execution Trigger)
-When a task is dragged to "The Ritual" column:
+When an invocation is dragged to "The Ritual" column:
 
 1. **Session Initialization**
-   - Extract task context: title, description, all comments
+   - Extract invocation context: title, description, all comments
    - Read project's AGENTS.md from the repository
-   - Create a new feature branch (auto-generated from task title)
+   - Create a new feature branch (auto-generated from invocation title)
    - Spawn Sprite.dev session with full context
 
 2. **During Execution**
-   - Task card shows progress indicator
+   - Invocation card shows progress indicator
    - User can navigate to Sprite.dev to watch real-time progress
-   - Task remains in "The Ritual" column
+   - Invocation remains in "The Ritual" column
 
 3. **On Completion**
    - Agent creates pull request with changes
-   - Task auto-moves to "The Trial" column
+   - Invocation auto-moves to "The Trial" column
    - Agent adds comment with PR link and summary
 
 4. **On Error**
-   - Task auto-moves to "Cursed" column
+   - Invocation auto-moves to "Cursed" column
    - Agent adds comment with error details
    - User can review, provide feedback, and send back to "The Ritual"
 
 ### The Trial (Review)
-When a task is in "The Trial":
+When an invocation is in "The Trial":
 
 1. User reviews the PR and agent's work
-2. User adds feedback via comments on the task card
+2. User adds feedback via comments on the invocation card
 3. Two paths:
-   - **Approve**: Drag to "Vanquished" (task complete)
+   - **Approve**: Drag to "Vanquished" (invocation complete)
    - **Request changes**: Drag back to "The Ritual"
      - Spawns new Sprite.dev session
      - Full comment history provides context
@@ -307,7 +307,7 @@ When working on Abraxas:
 ## Testing Strategy
 
 Write tests for:
-- Task creation, updates, deletion
+- Invocation creation, updates, deletion
 - Drag-and-drop state changes
 - Comment threads
 - Project configuration
@@ -321,20 +321,20 @@ Write tests for:
 - Create/manage multiple isolated projects
 - Connect project to repo path + GitHub PAT
 - Board view with all six mystical columns
-- Create task cards with all fields (title, description, optional metadata)
+- Create invocation cards with all fields (title, description, optional metadata)
 - Drag-and-drop between columns
-- Comments on tasks (user and agent)
+- Comments on invocations (user and agent)
 - Stubbed Sprite.dev integration (mock execution flow)
-- Progress indicators on active tasks
-- Auto-move tasks based on execution state
+- Progress indicators on active invocations
+- Auto-move invocations based on execution state
 - Review flow: feedback via comments, send back to ritual
 - Dark mode occult UI
 - Mobile-friendly responsive design
 
 ### Deferred to v2
-- Search/filter tasks
-- Archive completed tasks
-- Task dependencies
+- Search/filter invocations
+- Archive completed invocations
+- Invocation dependencies
 - Real-time board updates (WebSockets)
 - Actual Sprite.dev API integration
 - Custom column configuration
@@ -400,7 +400,7 @@ export async function GET(
 /components
   /ui                  # shadcn components
   /board               # Board-specific components
-  /tasks               # Task card components
+  /invocations         # Invocation card components
   /rituals             # Ritual components
 /lib
   /api                 # API utilities (auth helpers)
