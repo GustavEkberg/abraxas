@@ -109,6 +109,7 @@ export async function POST(
     error: payload.error,
     question: payload.question?.slice(0, 100),
     stats: payload.stats,
+    progress: payload.progress,
   })
 
   const program = Effect.gen(function* () {
