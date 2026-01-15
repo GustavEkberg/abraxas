@@ -23,6 +23,7 @@ This document outlines the technical architecture, implementation phases, and de
 - ✅ Tailwind CSS v4 with dark occult theme
 - ✅ shadcn/ui components installed (button, dialog, input, label, textarea, card, select)
 - ✅ ASCII fire background effect (grayscale, intensity-based)
+- ✅ Fixed fire animation reset bug when intensity changes
 
 **Phase 2 - Project Management** ✅
 - ✅ Project creation dialog with form validation
