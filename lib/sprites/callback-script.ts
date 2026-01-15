@@ -184,17 +184,33 @@ extract_token_stats() {
     local output_file="$1"
     
     if [ ! -f "$output_file" ]; then
-        echo ""
+        echo '{"messageCount":0,"inputTokens":0,"outputTokens":0}'
         return
     fi
     
     # Try to extract token counts from common patterns
-    # OpenCode typically outputs: "Messages: X, Input tokens: Y, Output tokens: Z"
-    local message_count=$(grep -oP 'Messages?:\\s*\\K\\d+' "$output_file" | tail -1 || echo "0")
-    local input_tokens=$(grep -oP 'Input tokens?:\\s*\\K[0-9,]+' "$output_file" | tr -d ',' | tail -1 || echo "0")
-    local output_tokens=$(grep -oP 'Output tokens?:\\s*\\K[0-9,]+' "$output_file" | tr -d ',' | tail -1 || echo "0")
+    # Look for patterns like: "Messages: X", "Input tokens: Y", "Output tokens: Z"
+    # Use basic grep with sed for portability
+    local message_count=0
+    local input_tokens=0
+    local output_tokens=0
     
-    # Default to 0 if not found
+    # Try to find message count
+    if grep -i "message" "$output_file" > /dev/null 2>&1; then
+        message_count=$(grep -i "message" "$output_file" | grep -o '[0-9]\\+' | tail -1 || echo "0")
+    fi
+    
+    # Try to find input tokens
+    if grep -i "input.*token" "$output_file" > /dev/null 2>&1; then
+        input_tokens=$(grep -i "input.*token" "$output_file" | grep -o '[0-9]\\+' | tail -1 || echo "0")
+    fi
+    
+    # Try to find output tokens
+    if grep -i "output.*token" "$output_file" > /dev/null 2>&1; then
+        output_tokens=$(grep -i "output.*token" "$output_file" | grep -o '[0-9]\\+' | tail -1 || echo "0")
+    fi
+    
+    # Default to 0 if empty
     message_count=\${message_count:-0}
     input_tokens=\${input_tokens:-0}
     output_tokens=\${output_tokens:-0}
@@ -208,24 +224,52 @@ monitor_progress() {
     local output_file="$1"
     local pid="$2"
     
+    echo "[Progress Monitor] Starting progress monitoring for PID $pid"
+    
     while kill -0 "$pid" 2>/dev/null; do
-        sleep 30  # Send progress every 30 seconds
+        echo "[Progress Monitor] Waiting 10 seconds..."
+        sleep 10
+        
+        echo "[Progress Monitor] Checking if process $pid is still running..."
+        if ! kill -0 "$pid" 2>/dev/null; then
+            echo "[Progress Monitor] Process finished, exiting monitor"
+            break
+        fi
+        
+        echo "[Progress Monitor] Extracting progress data from $output_file"
         
         # Get last line of output for progress message
         local last_line=""
         if [ -f "$output_file" ]; then
-            last_line=$(tail -n 1 "$output_file" | head -c 200 | sed 's/"/\\\\"/g')
+            last_line=$(tail -n 1 "$output_file" | head -c 200 | sed 's/"/\\\\"/g' || echo "")
+            echo "[Progress Monitor] Last line: \${last_line:0:50}..."
+        else
+            echo "[Progress Monitor] Output file not found: $output_file"
         fi
         
         # Extract token stats
+        echo "[Progress Monitor] Extracting token stats..."
         local stats=$(extract_token_stats "$output_file")
+        echo "[Progress Monitor] Stats: $stats"
+        
+        # Parse stats JSON for building progress
+        local msg_count=$(echo "$stats" | grep -o '"messageCount":[0-9]*' | grep -o '[0-9]*' || echo "0")
+        local in_tokens=$(echo "$stats" | grep -o '"inputTokens":[0-9]*' | grep -o '[0-9]*' | tail -1 || echo "0")
+        local out_tokens=$(echo "$stats" | grep -o '"outputTokens":[0-9]*' | grep -o '[0-9]*' | tail -1 || echo "0")
         
         # Build progress JSON
-        local progress_json='{"message":"'"$last_line"'","messageCount":'$(echo "$stats" | grep -oP '"messageCount":\\K\\d+' || echo "0")',"inputTokens":'$(echo "$stats" | grep -oP '"inputTokens":\\K\\d+' || echo "0")',"outputTokens":'$(echo "$stats" | grep -oP '"outputTokens":\\K\\d+' || echo "0")'}'
+        local progress_json='{"message":"'"$last_line"'","messageCount":'"$msg_count"',"inputTokens":'"$in_tokens"',"outputTokens":'"$out_tokens"'}'
         
+        echo "[Progress Monitor] Sending progress webhook with: $progress_json"
         # Send progress webhook (don't fail if webhook fails)
-        send_webhook "progress" "" "" "" "$progress_json" || true
+        if send_webhook "progress" "" "" "" "$progress_json"; then
+            echo "[Progress Monitor] Progress webhook sent successfully"
+        else
+            echo "[Progress Monitor] Progress webhook failed (continuing anyway)"
+        fi
     done
+    
+    echo "[Progress Monitor] Monitor loop exited"
 }
 
 echo "=== Abraxas Sprite Execution ==="
@@ -274,14 +318,19 @@ OPENCODE_OUTPUT_FILE="/tmp/opencode-output.txt"
 OPENCODE_EXIT_CODE=0
 
 # Run opencode with the prompt, capturing output
+echo "Starting OpenCode in background..."
 opencode run "${escapedPrompt} !ALWAYS COMMIT YOUR WORK TO BRANCH ${branchName} AND PUSH WHEN YOU ARE DONE!" 2>&1 | tee "$OPENCODE_OUTPUT_FILE" &
 OPENCODE_PID=$!
+echo "OpenCode started with PID: $OPENCODE_PID"
 
 # Start progress monitor in background
+echo "Starting progress monitor in background..."
 monitor_progress "$OPENCODE_OUTPUT_FILE" "$OPENCODE_PID" &
 MONITOR_PID=$!
+echo "Progress monitor started with PID: $MONITOR_PID"
 
 # Wait for OpenCode to finish
+echo "Waiting for OpenCode to complete..."
 if wait "$OPENCODE_PID"; then
     OPENCODE_EXIT_CODE=0
 else
@@ -289,8 +338,10 @@ else
 fi
 
 # Stop progress monitor
+echo "Stopping progress monitor (PID: $MONITOR_PID)..."
 kill "$MONITOR_PID" 2>/dev/null || true
 wait "$MONITOR_PID" 2>/dev/null || true
+echo "Progress monitor stopped"
 
 echo ""
 echo "================================"
