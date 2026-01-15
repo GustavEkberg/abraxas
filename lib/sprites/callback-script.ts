@@ -120,7 +120,7 @@ send_webhook() {
     local summary="$2"
     local error="$3"
     local stats="$4"
-    local progress_data="$5"
+    local progress_data="\${5:-}"
     
     echo "Sending webhook: type=$type"
     
@@ -244,7 +244,7 @@ echo "Cloning repository..."
 set +e  # Temporarily disable exit on error to handle webhook
 if ! git clone "${authRepoUrl}" /home/sprite/repo 2>&1; then
     echo "ERROR: Failed to clone repository"
-    send_webhook "error" "" "Failed to clone repository"
+    send_webhook "error" "" "Failed to clone repository" "" ""
     exit 1
 fi
 set -e
@@ -260,7 +260,7 @@ echo "Creating branch: $BRANCH_NAME"
 set +e  # Temporarily disable exit on error to handle webhook
 if ! git checkout -b "$BRANCH_NAME" 2>&1; then
     echo "ERROR: Failed to create branch: $BRANCH_NAME"
-    send_webhook "error" "" "Failed to create branch: $BRANCH_NAME"
+    send_webhook "error" "" "Failed to create branch: $BRANCH_NAME" "" ""
     exit 1
 fi
 set -e
@@ -334,7 +334,7 @@ else
     else
         ERROR_CONTEXT="OpenCode exited with code $OPENCODE_EXIT_CODE"
     fi
-    send_webhook "error" "" "$ERROR_CONTEXT"
+    send_webhook "error" "" "$ERROR_CONTEXT" "" ""
     
     WEBHOOK_EXIT=$?
     if [ $WEBHOOK_EXIT -ne 0 ]; then
