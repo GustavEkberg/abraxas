@@ -16,10 +16,15 @@ export function AsciiFire({ intensity = 0 }: AsciiFireProps) {
   const fireRef = useRef<HTMLPreElement>(null);
   const firePixelsRef = useRef<number[]>([]);
   const widthRef = useRef(0);
-  const heightRef = useRef(150);
+  const heightRef = useRef(120);
   const animationFrameRef = useRef<number | undefined>(undefined);
   const currentIntensityRef = useRef(0);
   const targetIntensityRef = useRef(0);
+
+  // Update target intensity when prop changes (without restarting animation)
+  useEffect(() => {
+    targetIntensityRef.current = intensity;
+  }, [intensity]);
 
   useEffect(() => {
     if (!fireRef.current) return;
@@ -39,9 +44,6 @@ export function AsciiFire({ intensity = 0 }: AsciiFireProps) {
     function step() {
       const width = widthRef.current;
       const firePixels = firePixelsRef.current;
-
-      // Update target intensity when prop changes
-      targetIntensityRef.current = intensity;
 
       // Smoothly interpolate current intensity towards target
       const diff = targetIntensityRef.current - currentIntensityRef.current;
@@ -120,7 +122,7 @@ export function AsciiFire({ intensity = 0 }: AsciiFireProps) {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [intensity]);
+  }, []);
 
   return (
     <pre
