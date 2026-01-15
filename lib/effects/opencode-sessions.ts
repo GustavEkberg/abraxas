@@ -57,6 +57,31 @@ export const getSessionByOpencodeId = (sessionId: string) =>
   });
 
 /**
+ * Get the most recent OpenCode session for a task.
+ */
+export const getLatestSessionByTaskId = (taskId: string) =>
+  Effect.gen(function* () {
+    const db = yield* DrizzleService;
+
+    const session = yield* db.query.opencodeSessions.findFirst({
+      where: eq(opencodeSessions.taskId, taskId),
+      orderBy: desc(opencodeSessions.createdAt),
+    });
+
+    if (!session) {
+      return yield* Effect.fail(
+        new RecordNotFoundError({
+          message: `No OpenCode session found for task: ${taskId}`,
+          table: "opencode_sessions",
+          id: taskId,
+        })
+      );
+    }
+
+    return session;
+  });
+
+/**
  * List all OpenCode sessions for a task.
  */
 export const listSessionsByTaskId = (taskId: string) =>

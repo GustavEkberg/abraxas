@@ -54,12 +54,14 @@ function verifySignature(
  * - OpenCode completes successfully
  * - OpenCode encounters an error
  * - OpenCode has a question for the user
+ * 
+ * Note: [sessionId] in the route is actually the taskId for routing purposes.
  */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ sessionId: string }> }
 ) {
-  const { sessionId } = await params
+  const { sessionId: taskId } = await params
 
   // Get raw body for signature verification
   const rawBody = await request.text()
@@ -67,7 +69,7 @@ export async function POST(
 
   // Log incoming webhook for debugging
   console.log("[Webhook] Received sprite callback:", {
-    sessionId,
+    taskId,
     signature: signature ? `${signature.slice(0, 20)}...` : "missing",
     bodyLength: rawBody.length,
   })
@@ -103,8 +105,8 @@ export async function POST(
   })
 
   const program = Effect.gen(function* () {
-    // Get session to verify signature and get task info
-    const session = yield* OpencodeSessions.getSessionById(sessionId)
+    // Get most recent session for this task to verify signature
+    const session = yield* OpencodeSessions.getLatestSessionByTaskId(taskId)
 
     if (!session.webhookSecret) {
       return yield* Effect.fail(
@@ -140,11 +142,11 @@ export async function POST(
     
     switch (payload.type) {
       case "completed":
-        yield* handleCompletion(session.taskId, sessionId, payload)
+        yield* handleCompletion(session.taskId, session.id, payload)
         console.log(`[Webhook] Task ${session.taskId} marked as completed`)
         break
       case "error":
-        yield* handleError(session.taskId, sessionId, payload)
+        yield* handleError(session.taskId, session.id, payload)
         console.log(`[Webhook] Task ${session.taskId} marked as error`)
         break
       case "question":
@@ -175,7 +177,7 @@ export async function POST(
       )
     }
 
-    console.log(`[Webhook] Completed processing for session ${sessionId}`)
+    console.log(`[Webhook] Completed processing for task ${session.taskId}`)
     return { success: true }
   })
 
