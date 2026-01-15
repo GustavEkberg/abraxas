@@ -3,12 +3,13 @@
 import { useEffect, useRef } from "react";
 
 interface AsciiFireProps {
-  intensity?: number; // 0-35, will be dynamic based on active rituals
+  intensity?: number; // 0+, will be dynamic based on active rituals
 }
 
 /**
  * ASCII fire background effect.
- * Renders a grayscale fire animation at the bottom of the screen.
+ * Renders a fire animation at the bottom of the screen.
+ * Fire size caps at intensity 35, above which color shifts from white to red/yellow.
  * Intensity increases with active ritual tasks.
  * Smoothly interpolates intensity changes for a gradual visual effect.
  */
@@ -16,7 +17,7 @@ export function AsciiFire({ intensity = 0 }: AsciiFireProps) {
   const fireRef = useRef<HTMLPreElement>(null);
   const firePixelsRef = useRef<number[]>([]);
   const widthRef = useRef(0);
-  const heightRef = useRef(120);
+  const heightRef = useRef(200);
   const animationFrameRef = useRef<number | undefined>(undefined);
   const currentIntensityRef = useRef(0);
   const targetIntensityRef = useRef(0);
@@ -54,7 +55,9 @@ export function AsciiFire({ intensity = 0 }: AsciiFireProps) {
       }
 
       // 1. Update the "Source" (bottom row) with interpolated intensity
-      const displayIntensity = Math.round(currentIntensityRef.current);
+      // Cap fire size at 35, use excess intensity for color changes
+      const rawIntensity = Math.round(currentIntensityRef.current);
+      const displayIntensity = Math.min(rawIntensity, 35);
       for (let i = 0; i < width; i++) {
         firePixels[(height - 1) * width + i] = displayIntensity;
       }
@@ -81,12 +84,30 @@ export function AsciiFire({ intensity = 0 }: AsciiFireProps) {
       render();
     }
 
+    function getFireColor(intensity: number): string {
+      if (intensity <= 35) {
+        return "rgba(255, 255, 255, 0.4)"; // white
+      }
+
+      // Above 35, interpolate towards red/yellow
+      // At intensity 120, should be fully red/yellow
+      const colorProgress = Math.min((intensity - 35) / (120 - 35), 1);
+
+      // Interpolate from white (255,255,255) to orange-red (255,100,0)
+      const r = 255;
+      const g = Math.round(255 - (colorProgress * 155)); // 255 -> 100
+      const b = Math.round(255 - (colorProgress * 255)); // 255 -> 0
+
+      return `rgba(${r}, ${g}, ${b}, 0.4)`;
+    }
+
     function render() {
       if (!fireRef.current) return;
 
       let output = "";
       const width = widthRef.current;
       const firePixels = firePixelsRef.current;
+      const currentIntensity = currentIntensityRef.current;
 
       for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
@@ -103,6 +124,9 @@ export function AsciiFire({ intensity = 0 }: AsciiFireProps) {
         output += "\n";
       }
       fireRef.current.textContent = output;
+
+      // Apply color based on intensity
+      fireRef.current.style.color = getFireColor(currentIntensity);
     }
 
     function animate() {

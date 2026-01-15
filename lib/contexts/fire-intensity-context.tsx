@@ -29,11 +29,11 @@ const FireIntensityContext = createContext<FireIntensityContextValue | null>(
 
 /**
  * Calculate fire intensity based on running tasks.
- * 
+ *
  * - Base intensity per task: 10
  * - Message bonus: +1 per message (up to max 10 bonus per task)
  * - Time bonus: +1 per 30 seconds (up to max 15 bonus per task)
- * - Max total intensity: 35 (capped to ASCII fire range)
+ * - Intensity can exceed 35, triggering color changes above threshold
  */
 function calculateIntensity(tasks: RunningTask[]): number {
   if (tasks.length === 0) return 0;
