@@ -4,9 +4,9 @@ This document outlines the technical architecture, implementation phases, and de
 
 ## Current Status
 
-**Phase:** Phase 1-5 Complete ✅ | Phase 6 Next 🎯
+**Phase:** Phase 1-5 Complete ✅ | Phase 6 (Sprite Integration) In Progress 🎯
 
-**Last Updated:** January 14, 2026
+**Last Updated:** January 15, 2026
 
 ### Completed Features
 
@@ -69,22 +69,40 @@ This document outlines the technical architecture, implementation phases, and de
 - ✅ Post agent comments with execution results
 - ✅ Fix event subscription persistence across page refreshes (localStorage)
 
+**Phase 6 - Sprite.dev Integration** 🎯 IN PROGRESS
+- ✅ Sprites.dev API client (`lib/sprites/client.ts`)
+- ✅ Sprite lifecycle management (spawn, destroy)
+- ✅ Webhook handler for sprite callbacks (`POST /api/webhooks/sprite/[sessionId]`)
+- ✅ HMAC signature verification for webhooks
+- ✅ Callback script generation with OpenCode execution
+- ✅ Branch creation and git configuration in sprites
+- ✅ Token and message tracking (messageCount, inputTokens, outputTokens)
+- ✅ Real-time progress webhooks (every 10 seconds during execution)
+- ✅ JSON event parsing from OpenCode (`--format json`)
+- ✅ Cumulative stats tracking per session
+- ✅ UI displays real-time token/message counts
+- ⬜ Optimize sprite dependency installation (avoid reinstalling every time)
+- ⬜ Sprite image with pre-installed dependencies
+- ⬜ Persistent sprite volumes for caching
+
 ### In Progress
-- None - Phase 6 in progress (GitHub integration nearly complete)
+- **Phase 6 - Sprite.dev Integration** 🎯
+  - ✅ Core sprite integration complete (webhooks, callbacks, token tracking)
+  - 🔄 Working on sprite optimization (dependency caching)
 
 ### Next Steps
-1. **Phase 6 - GitHub Integration** (finishing up)
-   - ✅ GitHub API integration with Octokit
+1. **Sprite Optimization** (current focus)
+   - Create custom sprite image with pre-installed dependencies
+   - Set up persistent volumes for package caching
+   - Reduce sprite spawn time from ~60s to ~10s
+   - Document sprite image build process
+   
+2. **Phase 7 - GitHub Integration Enhancements**
+   - ✅ GitHub API integration with Octokit (basic)
    - ✅ Feature branch creation via GitHub API
    - ✅ Branch naming convention: `abraxas/task-{id}-{slugified-title}`
-   - PR creation during task execution (agent-driven)
-   
-2. **Phase 7 - Sprite.dev Infrastructure** (next priority)
-   - Research Sprite.dev API for remote execution
-   - Implement Sprite.dev client service
-   - Add Sprite.dev authentication and session management
-   - Support for cloud-based task execution
-   - Remote repository integration (GitHub URLs)
+   - ⬜ PR creation automation (agent-driven)
+   - ⬜ PR status tracking and webhooks
    
 3. **Phase 8 - Vercel Deployment**
    - Vercel project setup
