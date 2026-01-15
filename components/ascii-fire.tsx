@@ -84,39 +84,19 @@ export function AsciiFire({ intensity = 0 }: AsciiFireProps) {
       render();
     }
 
-    function getCharColor(y: number, intensity: number): string {
+    function getFireColor(intensity: number): string {
       if (intensity <= 35) {
-        return "rgba(255, 255, 255, 0.4)"; // white for low intensity
+        return "rgba(255, 255, 255, 0.4)"; // white
       }
 
-      // Calculate vertical position factor (0 at top, 1 at bottom)
-      const verticalFactor = y / (height - 1);
+      // Above 35, interpolate towards red/yellow
+      // At intensity 120, should be fully red/yellow
+      const colorProgress = Math.min((intensity - 35) / (120 - 35), 1);
 
-      // Only apply color to lower portion of fire (bottom 70%)
-      if (verticalFactor < 0.3) {
-        return "rgba(255, 255, 255, 0.4)"; // white for upper fire
-      }
-
-      // Color intensity factor (0-1) based on how far above threshold we are
-      const colorIntensity = Math.min((intensity - 35) / (120 - 35), 1);
-
-      // Vertical color gradient: more intense at bottom
-      const bottomFactor = Math.pow(1 - verticalFactor, 1.5); // Exponential falloff from bottom
-
-      // Add some horizontal randomness for more natural look
-      const horizontalRandom = 0.7 + Math.random() * 0.6; // 0.7-1.3
-
-      // Combine factors with randomness
-      const totalFactor = colorIntensity * bottomFactor * horizontalRandom;
-
-      if (totalFactor < 0.15) {
-        return "rgba(255, 255, 255, 0.4)"; // mostly white
-      }
-
-      // Interpolate from white to orange-red
+      // Interpolate from white (255,255,255) to orange-red (255,100,0)
       const r = 255;
-      const g = Math.round(255 - (totalFactor * 155)); // 255 -> 100
-      const b = Math.round(255 - (totalFactor * 255)); // 255 -> 0
+      const g = Math.round(255 - (colorProgress * 155)); // 255 -> 100
+      const b = Math.round(255 - (colorProgress * 255)); // 255 -> 0
 
       return `rgba(${r}, ${g}, ${b}, 0.4)`;
     }
@@ -138,17 +118,15 @@ export function AsciiFire({ intensity = 0 }: AsciiFireProps) {
             const charIdx = Math.floor(
               (pixelIntensity / 35) * (charSet.length - 1)
             );
-            const char = charSet[charIdx];
-            const color = getCharColor(y, currentIntensity);
-
-            // Wrap character in span with color
-            output += `<span style="color: ${color}">${char}</span>`;
+            output += charSet[charIdx];
           }
         }
         output += "\n";
       }
+      fireRef.current.textContent = output;
 
-      fireRef.current.innerHTML = output;
+      // Apply color based on intensity
+      fireRef.current.style.color = getFireColor(currentIntensity);
     }
 
     function animate() {
@@ -173,7 +151,7 @@ export function AsciiFire({ intensity = 0 }: AsciiFireProps) {
   return (
     <pre
       ref={fireRef}
-      className="z-50 pointer-events-none fixed bottom-0 left-0 w-full whitespace-pre text-center font-mono text-[10px] leading-[8px]"
+      className="z-50 pointer-events-none fixed bottom-0 left-0 w-full whitespace-pre text-center font-mono text-[10px] leading-[8px] text-white/40"
       aria-hidden="true"
     />
   );
