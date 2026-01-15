@@ -189,23 +189,20 @@ extract_token_stats() {
     fi
     
     # Parse JSON events to extract token usage
-    # OpenCode outputs JSONL (one JSON object per line)
-    # Look for usage events or message completion events
+    # OpenCode outputs events like: {"type":"step_finish","tokens":{"input":254,"output":51}}
     local message_count=0
     local input_tokens=0
     local output_tokens=0
     
-    # Count message events (lines with "type":"message" or similar)
-    if [ -f "$json_file" ]; then
-        # Count lines with message-like events (assistant responses)
-        message_count=$(grep -c '"type":"assistant"\\|"role":"assistant"' "$json_file" 2>/dev/null || echo "0")
-        
-        # Sum up all input tokens from usage events
-        input_tokens=$(grep -o '"inputTokens":[0-9]*\\|"input_tokens":[0-9]*\\|"prompt_tokens":[0-9]*' "$json_file" 2>/dev/null | grep -o '[0-9]*' | awk '{s+=\$1} END {print s}' || echo "0")
-        
-        # Sum up all output tokens from usage events
-        output_tokens=$(grep -o '"outputTokens":[0-9]*\\|"output_tokens":[0-9]*\\|"completion_tokens":[0-9]*' "$json_file" 2>/dev/null | grep -o '[0-9]*' | awk '{s+=\$1} END {print s}' || echo "0")
-    fi
+    # Count step_finish events as message count (each step is a turn)
+    message_count=$(grep -c '"type":"step_finish"' "$json_file" 2>/dev/null || echo "0")
+    
+    # Extract all "input" token values from nested tokens object and sum them
+    # Pattern: "tokens":{"input":123,...}
+    input_tokens=$(grep -o '"tokens":{[^}]*"input":[0-9]*' "$json_file" 2>/dev/null | grep -o '"input":[0-9]*' | grep -o '[0-9]*' | awk '{s+=\$1} END {print s+0}')
+    
+    # Extract all "output" token values from nested tokens object and sum them
+    output_tokens=$(grep -o '"tokens":{[^}]*"output":[0-9]*' "$json_file" 2>/dev/null | grep -o '"output":[0-9]*' | grep -o '[0-9]*' | awk '{s+=\$1} END {print s+0}')
     
     # Default to 0 if empty
     message_count=\${message_count:-0}
@@ -357,9 +354,15 @@ echo "OpenCode exit code: $OPENCODE_EXIT_CODE"
 # Extract summary and stats from opencode output
 SUMMARY=""
 STATS_JSON=""
-if [ -f "$OPENCODE_OUTPUT_FILE" ]; then
-    # Get last 20 non-empty lines, take last 500 chars, escape for JSON
-    SUMMARY=$(tail -n 50 "$OPENCODE_OUTPUT_FILE" | grep -v '^$' | tail -c 500 | tr '\\n' ' ' | sed 's/"/\\\\"/g' | sed "s/'/\\\\'/g")
+if [ -f "$OPENCODE_JSON_FILE" ]; then
+    # Extract text content from the last 3 text events and take last 500 chars
+    # Look for "type":"text" events and extract the "text" field
+    SUMMARY=$(grep '"type":"text"' "$OPENCODE_JSON_FILE" | tail -3 | grep -o '"text":"[^"]*"' | sed 's/"text":"//;s/"$//' | tr '\\n' ' ' | tail -c 500 | sed 's/\\\\/\\\\\\\\/g' | sed 's/"/\\\\"/g')
+    
+    # If no text found, use a generic message
+    if [ -z "$SUMMARY" ]; then
+        SUMMARY="Task completed successfully"
+    fi
     
     # Extract final token stats from JSON events
     STATS_JSON=$(extract_token_stats "$OPENCODE_JSON_FILE")
