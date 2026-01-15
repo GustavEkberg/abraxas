@@ -80,7 +80,7 @@ export function CreateRitualDialog({ trigger }: CreateRitualDialogProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button className="bg-purple-600 hover:bg-purple-700">
+          <Button className="bg-red-600 hover:bg-red-700">
             Summon New Ritual
           </Button>
         )}
@@ -214,7 +214,7 @@ export function CreateRitualDialog({ trigger }: CreateRitualDialogProps) {
             <Button
               type="submit"
               disabled={loading}
-              className="bg-purple-600 hover:bg-purple-700"
+              className="bg-red-600 hover:bg-red-700"
             >
               {loading ? "Summoning..." : "Begin Ritual"}
             </Button>

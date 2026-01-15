@@ -103,7 +103,7 @@ export function CreateInvocationDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border-purple-500/20 bg-zinc-950 sm:max-w-[525px]">
+      <DialogContent className="border-red-500/20 bg-zinc-950 sm:max-w-[525px]">
         <DialogHeader>
           <DialogTitle className="text-white/90">
             Cast New Invocation
@@ -203,7 +203,7 @@ export function CreateInvocationDialog({
             <Button
               type="submit"
               disabled={loading}
-              className="bg-purple-600 text-white transition-all duration-200 hover:bg-purple-700 active:scale-95 disabled:opacity-50"
+              className="bg-red-600 text-white transition-all duration-200 hover:bg-red-700 active:scale-95 disabled:opacity-50"
             >
               {loading ? "Casting..." : "Cast Invocation"}
             </Button>

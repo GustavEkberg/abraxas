@@ -37,14 +37,14 @@ export function AddCommentForm({ onSubmit }: AddCommentFormProps) {
         value={content}
         onChange={(e) => setContent(e.target.value)}
         placeholder="Add a comment..."
-        className="min-h-[100px] resize-none border-white/10 bg-zinc-950 text-white/90 placeholder:text-white/40 focus:border-purple-500/40"
+        className="min-h-[100px] resize-none border-white/10 bg-zinc-950 text-white/90 placeholder:text-white/40 focus:border-red-500/40"
         disabled={isSubmitting}
       />
       <div className="flex justify-end">
         <Button
           type="submit"
           disabled={!content.trim() || isSubmitting}
-          className="bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50"
+          className="bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
         >
           {isSubmitting ? "Posting..." : "Post Comment"}
         </Button>

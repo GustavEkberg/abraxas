@@ -16,7 +16,7 @@ export function AsciiFire({ intensity = 0 }: AsciiFireProps) {
   const fireRef = useRef<HTMLPreElement>(null);
   const firePixelsRef = useRef<number[]>([]);
   const widthRef = useRef(0);
-  const heightRef = useRef(50);
+  const heightRef = useRef(200);
   const animationFrameRef = useRef<number | undefined>(undefined);
   const currentIntensityRef = useRef(0);
   const targetIntensityRef = useRef(0);
@@ -125,7 +125,7 @@ export function AsciiFire({ intensity = 0 }: AsciiFireProps) {
   return (
     <pre
       ref={fireRef}
-      className="z-50 pointer-events-none fixed bottom-0 left-0 h-[400px] w-full overflow-hidden whitespace-pre text-center font-mono text-[10px] leading-[8px] text-white/40"
+      className="z-50 pointer-events-none fixed bottom-0 left-0 w-full whitespace-pre text-center font-mono text-[10px] leading-[8px] text-white/40"
       aria-hidden="true"
     />
   );

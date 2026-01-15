@@ -56,8 +56,7 @@ function calculateIntensity(tasks: RunningTask[]): number {
     return sum + baseIntensityPerTask + msgBonus + timeBonus(elapsed);
   }, 0);
 
-  // Cap at 35 (max ASCII fire intensity)
-  return Math.min(totalIntensity, 55);
+  return totalIntensity;
 }
 
 export function FireIntensityProvider({ children }: { children: ReactNode; }) {

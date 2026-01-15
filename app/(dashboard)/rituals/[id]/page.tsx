@@ -49,13 +49,13 @@ const COLUMNS = [
     id: "altar",
     title: "The Altar",
     description: "Prepared for demonic rituals",
-    color: "border-purple-500/20",
+    color: "border-red-500/20",
   },
   {
     id: "ritual",
     title: "The Ritual",
     description: "Active invocations",
-    color: "border-cyan-500/20",
+    color: "border-red-500/20",
   },
   {
     id: "cursed",
@@ -136,7 +136,7 @@ function DroppableColumn({
   return (
     <div
       ref={setNodeRef}
-      className={`flex min-w-[280px] flex-col border border-dashed bg-zinc-950/50 p-4 transition-colors font-mono ${isOver ? "border-purple-500/40 bg-zinc-900/50" : ""
+      className={`flex min-w-[280px] flex-col border border-dashed bg-zinc-950/50 p-4 transition-colors font-mono ${isOver ? "border-red-500/40 bg-zinc-900/50" : ""
         }`}
       style={{
         borderColor: isOver
@@ -178,7 +178,7 @@ function DraggableCard({
   console.log(invocation);
 
   const borderColor = isExecuting
-    ? "border-cyan-500/40 border-dashed"
+    ? "border-red-500/40 border-dashed"
     : isError
       ? "border-red-500/40 border-dashed"
       : isCompleted
@@ -186,7 +186,7 @@ function DraggableCard({
         : "border-white/20 border-dashed";
 
   const bgColor = isExecuting
-    ? "bg-cyan-950/20"
+    ? "bg-red-950/20"
     : isError
       ? "bg-red-950/20"
       : "bg-zinc-900";
@@ -205,8 +205,8 @@ function DraggableCard({
         <h3 className="font-medium text-white/90">{invocation.title}</h3>
         {isExecuting && (
           <div className="flex items-center gap-1">
-            <div className="h-2 w-2 animate-pulse rounded-full bg-cyan-400" />
-            <span className="text-xs text-cyan-400">Executing</span>
+            <div className="h-2 w-2 animate-pulse rounded-full bg-red-400" />
+            <span className="text-xs text-red-400">Executing</span>
           </div>
         )}
         {isError && (
@@ -220,7 +220,7 @@ function DraggableCard({
         {invocation.description}
       </p>
       <div className="mt-2 flex items-center gap-2 text-xs text-white/40">
-        <span className="rounded bg-purple-500/10 px-1.5 py-0.5 text-purple-400">
+        <span className="rounded bg-red-500/10 px-1.5 py-0.5 text-red-400">
           {invocation.type}
         </span>
         <span className="rounded bg-white/5 px-1.5 py-0.5">
@@ -229,7 +229,7 @@ function DraggableCard({
         {(invocation.messageCount !== undefined && invocation.messageCount > 0) ||
          (invocation.inputTokens !== undefined && invocation.inputTokens > 0) ||
          (invocation.outputTokens !== undefined && invocation.outputTokens > 0) ? (
-          <span className="rounded bg-cyan-500/10 px-1.5 py-0.5 text-cyan-400">
+          <span className="rounded bg-red-500/10 px-1.5 py-0.5 text-red-400">
             {invocation.messageCount || 0}m · {Math.round(((invocation.inputTokens || 0) + (invocation.outputTokens || 0)) / 1000)}k
           </span>
         ) : null}

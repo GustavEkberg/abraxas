@@ -30,14 +30,14 @@ export function Comment({
     >
       <div
         className={`max-w-[80%] rounded-lg p-4 ${isAgentComment
-          ? "bg-cyan-950/30 border border-cyan-500/20"
-          : "bg-purple-950/30 border border-purple-500/20"
+          ? "bg-red-950/30 border border-red-500/20"
+          : "bg-red-950/30 border border-red-500/20"
           }`}
       >
         {/* Author and timestamp */}
         <div className="mb-2 flex items-center gap-2">
           <span
-            className={`text-sm font-medium ${isAgentComment ? "text-cyan-400" : "text-purple-400"
+            className={`text-sm font-medium ${isAgentComment ? "text-red-400" : "text-red-400"
               }`}
           >
             {displayName}

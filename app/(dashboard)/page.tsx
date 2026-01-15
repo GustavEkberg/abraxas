@@ -85,7 +85,7 @@ export default function RitualsPage() {
             </p>
             <CreateRitualDialog
               trigger={
-                <button className="border border-dashed border-purple-500 bg-purple-600 px-6 py-3 font-medium text-white transition-all duration-200 hover:bg-purple-700 active:scale-95 font-mono">
+                <button className="border border-dashed border-red-500 bg-red-600 px-6 py-3 font-medium text-white transition-all duration-200 hover:bg-red-700 active:scale-95 font-mono">
                   Summon Your First Ritual
                 </button>
               }
@@ -96,10 +96,10 @@ export default function RitualsPage() {
             {rituals.map((ritual) => (
               <Card
                 key={ritual.id}
-                className="flex justify-between group cursor-pointer border-dashed border-white/20 bg-zinc-950 p-6 transition-all duration-200 hover:border-purple-500/30 hover:bg-zinc-900 font-mono"
+                className="flex justify-between group cursor-pointer border-dashed border-white/20 bg-zinc-950 p-6 transition-all duration-200 hover:border-red-500/30 hover:bg-zinc-900 font-mono"
                 onClick={() => router.push(`/rituals/${ritual.id}`)}
               >
-                <h3 className="mb-2 text-xl font-semibold text-white/90 transition-colors group-hover:text-purple-400">
+                <h3 className="mb-2 text-xl font-semibold text-white/90 transition-colors group-hover:text-red-400">
                   {ritual.name}
                 </h3>
                 {ritual.description && (

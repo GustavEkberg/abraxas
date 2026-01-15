@@ -239,12 +239,13 @@ export function TaskDetailModal({
 
       setDeleteConfirmOpen(false);
       onOpenChange(false);
+      onUpdate?.();
     } catch (error) {
       console.error("Failed to delete task:", error);
     } finally {
       setIsDeleting(false);
     }
-  }, [ritualId, task, onOpenChange]);
+  }, [ritualId, task, onOpenChange, onUpdate]);
 
   if (!task) return null;
 
@@ -270,7 +271,7 @@ export function TaskDetailModal({
           {/* Task metadata */}
           <div className="mb-6 flex items-center gap-4 flex-wrap">
             <span className="text-sm text-white/60">Status:</span>
-            <span className="rounded-full bg-purple-500/20 px-3 py-1 text-purple-400 text-sm">
+            <span className="rounded-full bg-red-500/20 px-3 py-1 text-red-400 text-sm">
               {task.status}
             </span>
             <span className="text-sm text-white/60 ml-4">Type:</span>
@@ -320,11 +321,11 @@ export function TaskDetailModal({
             (task.outputTokens !== undefined && task.outputTokens > 0)) && (
               <div className="mb-6 flex items-center gap-4">
                 <span className="text-sm text-white/60">Session Stats:</span>
-                <span className="rounded bg-cyan-500/10 px-3 py-1 text-cyan-400 text-sm">
+                <span className="rounded bg-red-500/10 px-3 py-1 text-red-400 text-sm">
                   {task.messageCount || 0} messages
                 </span>
                 {((task.inputTokens || 0) + (task.outputTokens || 0) > 0) && (
-                  <span className="rounded bg-cyan-500/10 px-3 py-1 text-cyan-400 text-sm">
+                  <span className="rounded bg-red-500/10 px-3 py-1 text-red-400 text-sm">
                     {Math.round(((task.inputTokens || 0) + (task.outputTokens || 0)) / 1000)}k tokens
                   </span>
                 )}
