@@ -11,7 +11,7 @@ import { destroySprite } from "@/lib/sprites/client"
  * Webhook payload types from Sprite execution.
  */
 interface WebhookPayload {
-  type: "completed" | "error" | "question"
+  type: "completed" | "error" | "question" | "progress"
   sessionId: string
   taskId: string
   summary?: string
@@ -21,6 +21,13 @@ interface WebhookPayload {
     messageCount: number
     inputTokens: number
     outputTokens: number
+  }
+  progress?: {
+    message: string
+    currentStep?: string
+    messageCount?: number
+    inputTokens?: number
+    outputTokens?: number
   }
 }
 
@@ -153,6 +160,10 @@ export async function POST(
         yield* handleQuestion(session.taskId, payload)
         console.log(`[Webhook] Question posted for task ${session.taskId}`)
         break
+      case "progress":
+        yield* handleProgress(session.taskId, session.id, payload)
+        console.log(`[Webhook] Progress updated for task ${session.taskId}`)
+        break
       default:
         console.log(`[Webhook] Unknown payload type: ${payload.type}`)
         return yield* Effect.fail(
@@ -163,8 +174,8 @@ export async function POST(
         )
     }
 
-    // Destroy sprite after completion or error (not for questions)
-    if (payload.type !== "question" && session.spriteName) {
+    // Destroy sprite after completion or error (not for questions or progress)
+    if (payload.type !== "question" && payload.type !== "progress" && session.spriteName) {
       console.log(`[Webhook] Destroying sprite: ${session.spriteName}`)
       yield* destroySprite(session.spriteName).pipe(
         Effect.tap(() => Effect.sync(() => 
@@ -278,5 +289,35 @@ function handleQuestion(taskId: string, payload: WebhookPayload) {
   return Effect.gen(function* () {
     const commentText = `**Question from Abraxas:**\n\n${payload.question}\n\nPlease respond in the comments to continue execution.`
     yield* Comments.createAgentComment(taskId, commentText, "Abraxas")
+  })
+}
+
+/**
+ * Handle progress update during execution.
+ */
+function handleProgress(
+  taskId: string,
+  sessionId: string,
+  payload: WebhookPayload
+) {
+  return Effect.gen(function* () {
+    // Update session with incremental stats if provided
+    if (payload.progress) {
+      const { messageCount, inputTokens, outputTokens } = payload.progress
+
+      if (messageCount !== undefined && inputTokens !== undefined && outputTokens !== undefined) {
+        yield* OpencodeSessions.updateSessionStats(
+          sessionId,
+          messageCount,
+          inputTokens,
+          outputTokens
+        )
+      }
+    }
+
+    // Update task execution state to show it's in progress
+    yield* Tasks.updateTask(taskId, {
+      executionState: "in_progress",
+    })
   })
 }

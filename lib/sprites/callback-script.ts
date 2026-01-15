@@ -120,6 +120,7 @@ send_webhook() {
     local summary="$2"
     local error="$3"
     local stats="$4"
+    local progress_data="$5"
     
     echo "Sending webhook: type=$type"
     
@@ -133,6 +134,8 @@ send_webhook() {
         fi
     elif [ "$type" = "error" ]; then
         payload='{"type":"error","sessionId":"'"$SESSION_ID"'","taskId":"'"$TASK_ID"'","error":"'"$error"'"}'
+    elif [ "$type" = "progress" ]; then
+        payload='{"type":"progress","sessionId":"'"$SESSION_ID"'","taskId":"'"$TASK_ID"'","progress":'"$progress_data"'}'
     else
         payload='{"type":"'"$type"'","sessionId":"'"$SESSION_ID"'","taskId":"'"$TASK_ID"'"}'
     fi
@@ -174,6 +177,55 @@ escape_json() {
     str=\${str//$'\\n'/\\\\n}
     str=\${str//$'\\r'/\\\\r}
     echo "$str"
+}
+
+# Function to extract token counts from OpenCode output
+extract_token_stats() {
+    local output_file="$1"
+    
+    if [ ! -f "$output_file" ]; then
+        echo ""
+        return
+    fi
+    
+    # Try to extract token counts from common patterns
+    # OpenCode typically outputs: "Messages: X, Input tokens: Y, Output tokens: Z"
+    local message_count=$(grep -oP 'Messages?:\\s*\\K\\d+' "$output_file" | tail -1 || echo "0")
+    local input_tokens=$(grep -oP 'Input tokens?:\\s*\\K[0-9,]+' "$output_file" | tr -d ',' | tail -1 || echo "0")
+    local output_tokens=$(grep -oP 'Output tokens?:\\s*\\K[0-9,]+' "$output_file" | tr -d ',' | tail -1 || echo "0")
+    
+    # Default to 0 if not found
+    message_count=\${message_count:-0}
+    input_tokens=\${input_tokens:-0}
+    output_tokens=\${output_tokens:-0}
+    
+    # Return JSON object with counts
+    echo '{"messageCount":'"$message_count"',"inputTokens":'"$input_tokens"',"outputTokens":'"$output_tokens"'}'
+}
+
+# Function to send progress updates periodically
+monitor_progress() {
+    local output_file="$1"
+    local pid="$2"
+    
+    while kill -0 "$pid" 2>/dev/null; do
+        sleep 30  # Send progress every 30 seconds
+        
+        # Get last line of output for progress message
+        local last_line=""
+        if [ -f "$output_file" ]; then
+            last_line=$(tail -n 1 "$output_file" | head -c 200 | sed 's/"/\\\\"/g')
+        fi
+        
+        # Extract token stats
+        local stats=$(extract_token_stats "$output_file")
+        
+        # Build progress JSON
+        local progress_json='{"message":"'"$last_line"'","messageCount":'$(echo "$stats" | grep -oP '"messageCount":\\K\\d+' || echo "0")',"inputTokens":'$(echo "$stats" | grep -oP '"inputTokens":\\K\\d+' || echo "0")',"outputTokens":'$(echo "$stats" | grep -oP '"outputTokens":\\K\\d+' || echo "0")'}'
+        
+        # Send progress webhook (don't fail if webhook fails)
+        send_webhook "progress" "" "" "" "$progress_json" || true
+    done
 }
 
 echo "=== Abraxas Sprite Execution ==="
@@ -222,22 +274,37 @@ OPENCODE_OUTPUT_FILE="/tmp/opencode-output.txt"
 OPENCODE_EXIT_CODE=0
 
 # Run opencode with the prompt, capturing output
-if opencode run "${escapedPrompt} !ALWAYS COMMIT YOUR WORK TO BRANCH ${branchName} AND PUSH WHEN YOU ARE DONE!" 2>&1 | tee "$OPENCODE_OUTPUT_FILE"; then
+opencode run "${escapedPrompt} !ALWAYS COMMIT YOUR WORK TO BRANCH ${branchName} AND PUSH WHEN YOU ARE DONE!" 2>&1 | tee "$OPENCODE_OUTPUT_FILE" &
+OPENCODE_PID=$!
+
+# Start progress monitor in background
+monitor_progress "$OPENCODE_OUTPUT_FILE" "$OPENCODE_PID" &
+MONITOR_PID=$!
+
+# Wait for OpenCode to finish
+if wait "$OPENCODE_PID"; then
     OPENCODE_EXIT_CODE=0
 else
-    OPENCODE_EXIT_CODE=\${PIPESTATUS[0]}
+    OPENCODE_EXIT_CODE=$?
 fi
+
+# Stop progress monitor
+kill "$MONITOR_PID" 2>/dev/null || true
+wait "$MONITOR_PID" 2>/dev/null || true
 
 echo ""
 echo "================================"
 echo "OpenCode exit code: $OPENCODE_EXIT_CODE"
 
-# Extract summary from opencode output
-# Get the last meaningful lines (skip empty lines, get last ~500 chars)
+# Extract summary and stats from opencode output
 SUMMARY=""
+STATS_JSON=""
 if [ -f "$OPENCODE_OUTPUT_FILE" ]; then
     # Get last 20 non-empty lines, take last 500 chars, escape for JSON
     SUMMARY=$(tail -n 50 "$OPENCODE_OUTPUT_FILE" | grep -v '^$' | tail -c 500 | tr '\\n' ' ' | sed 's/"/\\\\"/g' | sed "s/'/\\\\'/g")
+    
+    # Extract final token stats
+    STATS_JSON=$(extract_token_stats "$OPENCODE_OUTPUT_FILE")
 fi
 
 # Disable exit on error for final webhook sending
@@ -248,9 +315,9 @@ if [ $OPENCODE_EXIT_CODE -eq 0 ]; then
     echo "Execution completed successfully"
     
     if [ -n "$SUMMARY" ]; then
-        send_webhook "completed" "$SUMMARY" "" ""
+        send_webhook "completed" "$SUMMARY" "" "$STATS_JSON"
     else
-        send_webhook "completed" "Task executed successfully" "" ""
+        send_webhook "completed" "Task executed successfully" "" "$STATS_JSON"
     fi
     
     WEBHOOK_EXIT=$?
