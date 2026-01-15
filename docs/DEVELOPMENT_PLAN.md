@@ -22,7 +22,7 @@ This document outlines the technical architecture, implementation phases, and de
 - ✅ Effect-based user verification in API routes
 - ✅ Tailwind CSS v4 with dark occult theme
 - ✅ shadcn/ui components installed (button, dialog, input, label, textarea, card, select)
-- ✅ ASCII fire background effect (grayscale, intensity-based)
+- ✅ ASCII fire background effect (grayscale with localized color intensity)
 - ✅ Fixed fire animation reset bug when intensity changes
 
 **Phase 2 - Project Management** ✅
@@ -776,7 +776,7 @@ Abraxas will support two execution modes:
 5. ✅ Implement Better Auth with magic links
 6. ✅ Build basic layout (header, navigation)
 7. ✅ Create project list page (empty state)
-8. ✅ Add ASCII fire background effect
+8. ✅ Add ASCII fire background effect with localized color intensity
 
 **Deliverables:**
 - ✅ Working authentication flow
