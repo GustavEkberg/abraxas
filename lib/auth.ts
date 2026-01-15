@@ -4,6 +4,8 @@ import { magicLink } from "better-auth/plugins";
 import { db } from "@/lib/db/client";
 import * as authSchema from "@/schemas/auth";
 import { eq } from "drizzle-orm";
+import { Effect } from "effect";
+import { sendMagicLinkEmail } from "@/lib/effects/emails";
 
 /**
  * Better Auth configuration with magic link authentication.
@@ -42,13 +44,16 @@ export const auth = betterAuth({
           console.log("🔗 URL:", url);
         }
 
-        // TODO: In production, send actual email via service (Resend, SendGrid, etc.)
-        // Example:
-        // await sendEmail({
-        //   to: email,
-        //   subject: "Sign in to Abraxas",
-        //   html: `Click here to sign in: <a href="${url}">${url}</a>`
-        // })
+        // Send email via Resend
+        try {
+          await Effect.runPromise(sendMagicLinkEmail({ email, url }));
+          if (process.env.NODE_ENV === "development") {
+            console.log("✅ Magic link email sent successfully");
+          }
+        } catch (error) {
+          console.error("❌ Failed to send magic link email:", error);
+          // In production, you might want to log to monitoring service
+        }
       },
     }),
   ],
