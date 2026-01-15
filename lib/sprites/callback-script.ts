@@ -257,6 +257,11 @@ monitor_progress() {
         local in_tokens=$(echo "$stats" | grep -o '"inputTokens":[0-9]*' | grep -o '[0-9]*' | tail -1 || echo "0")
         local out_tokens=$(echo "$stats" | grep -o '"outputTokens":[0-9]*' | grep -o '[0-9]*' | tail -1 || echo "0")
         
+        # Ensure we have valid numbers (default to 0 if empty)
+        msg_count=\${msg_count:-0}
+        in_tokens=\${in_tokens:-0}
+        out_tokens=\${out_tokens:-0}
+        
         # Build progress JSON
         local progress_json='{"message":"'"$last_line"'","messageCount":'"$msg_count"',"inputTokens":'"$in_tokens"',"outputTokens":'"$out_tokens"'}'
         
@@ -320,7 +325,8 @@ OPENCODE_EXIT_CODE=0
 
 # Run opencode with JSON format for easy parsing of events
 echo "Starting OpenCode in background..."
-opencode run --format json "${escapedPrompt} !ALWAYS COMMIT YOUR WORK TO BRANCH ${branchName} AND PUSH WHEN YOU ARE DONE!" 2>&1 | tee "$OPENCODE_OUTPUT_FILE" > "$OPENCODE_JSON_FILE" &
+# Redirect output to JSON file while also showing on console
+opencode run --format json "${escapedPrompt} !ALWAYS COMMIT YOUR WORK TO BRANCH ${branchName} AND PUSH WHEN YOU ARE DONE!" 2>&1 | tee "$OPENCODE_OUTPUT_FILE" | tee "$OPENCODE_JSON_FILE" &
 OPENCODE_PID=$!
 echo "OpenCode started with PID: $OPENCODE_PID"
 
