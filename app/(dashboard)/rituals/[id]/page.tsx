@@ -16,6 +16,7 @@ import { Card } from "@/components/ui/card";
 import { CreateInvocationDialog } from "@/components/invocations/create-invocation-dialog";
 import { TaskDetailModal } from "@/components/invocations/task-detail-modal";
 import { useFireIntensity } from "@/lib/contexts/fire-intensity-context";
+import { AsciiSpark } from "@/components/ascii-spark";
 
 interface Ritual {
   id: string;
@@ -198,16 +199,14 @@ function DraggableCard({
       {...attributes}
       {...listeners}
       onClick={() => onClick(invocation)}
-      className={`cursor-grab p-4 transition-all duration-200 hover:border-white/30 hover:bg-zinc-800 font-mono ${borderColor} ${bgColor} ${isDragging ? "opacity-50" : ""
+      className={`relative cursor-grab p-4 transition-all duration-200 hover:border-white/30 hover:bg-zinc-800 font-mono ${borderColor} ${bgColor} ${isDragging ? "opacity-50" : ""
         }`}
     >
+      {isExecuting && <AsciiSpark />}
       <div className="mb-2 flex items-center justify-between">
         <h3 className="font-medium text-white/90">{invocation.title}</h3>
         {isExecuting && (
-          <div className="flex items-center gap-1">
-            <div className="h-2 w-2 animate-pulse rounded-full bg-red-400" />
-            <span className="text-xs text-red-400">Executing</span>
-          </div>
+          <span className="text-xs text-red-400">Executing</span>
         )}
         {isError && (
           <span className="text-xs text-red-400">Error</span>

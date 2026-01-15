@@ -103,7 +103,7 @@ export function generateCallbackScript(config: CallbackScriptConfig): string {
 
   // Git user config from environment
   const gitUserEmail = process.env.GH_USER_EMAIL || "abraxas@sprites.dev";
-  const gitUserName = process.env.GH_USER_NAME || "Abraxas";
+  const gitUserName = process.env.GH_USER_NAME || "abraxxxxas";
 
   return `#!/bin/bash
 set -euo pipefail
