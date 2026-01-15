@@ -179,35 +179,32 @@ escape_json() {
     echo "$str"
 }
 
-# Function to extract token counts from OpenCode output
+# Function to extract token counts from OpenCode JSON events
 extract_token_stats() {
-    local output_file="$1"
+    local json_file="$1"
     
-    if [ ! -f "$output_file" ]; then
+    if [ ! -f "$json_file" ]; then
         echo '{"messageCount":0,"inputTokens":0,"outputTokens":0}'
         return
     fi
     
-    # Try to extract token counts from common patterns
-    # Look for patterns like: "Messages: X", "Input tokens: Y", "Output tokens: Z"
-    # Use basic grep with sed for portability
+    # Parse JSON events to extract token usage
+    # OpenCode outputs JSONL (one JSON object per line)
+    # Look for usage events or message completion events
     local message_count=0
     local input_tokens=0
     local output_tokens=0
     
-    # Try to find message count
-    if grep -i "message" "$output_file" > /dev/null 2>&1; then
-        message_count=$(grep -i "message" "$output_file" | grep -o '[0-9]\\+' | tail -1 || echo "0")
-    fi
-    
-    # Try to find input tokens
-    if grep -i "input.*token" "$output_file" > /dev/null 2>&1; then
-        input_tokens=$(grep -i "input.*token" "$output_file" | grep -o '[0-9]\\+' | tail -1 || echo "0")
-    fi
-    
-    # Try to find output tokens
-    if grep -i "output.*token" "$output_file" > /dev/null 2>&1; then
-        output_tokens=$(grep -i "output.*token" "$output_file" | grep -o '[0-9]\\+' | tail -1 || echo "0")
+    # Count message events (lines with "type":"message" or similar)
+    if [ -f "$json_file" ]; then
+        # Count lines with message-like events (assistant responses)
+        message_count=$(grep -c '"type":"assistant"\\|"role":"assistant"' "$json_file" 2>/dev/null || echo "0")
+        
+        # Sum up all input tokens from usage events
+        input_tokens=$(grep -o '"inputTokens":[0-9]*\\|"input_tokens":[0-9]*\\|"prompt_tokens":[0-9]*' "$json_file" 2>/dev/null | grep -o '[0-9]*' | awk '{s+=\$1} END {print s}' || echo "0")
+        
+        # Sum up all output tokens from usage events
+        output_tokens=$(grep -o '"outputTokens":[0-9]*\\|"output_tokens":[0-9]*\\|"completion_tokens":[0-9]*' "$json_file" 2>/dev/null | grep -o '[0-9]*' | awk '{s+=\$1} END {print s}' || echo "0")
     fi
     
     # Default to 0 if empty
@@ -221,8 +218,9 @@ extract_token_stats() {
 
 # Function to send progress updates periodically
 monitor_progress() {
-    local output_file="$1"
-    local pid="$2"
+    local json_file="$1"
+    local output_file="$2"
+    local pid="$3"
     
     echo "[Progress Monitor] Starting progress monitoring for PID $pid"
     
@@ -236,20 +234,22 @@ monitor_progress() {
             break
         fi
         
-        echo "[Progress Monitor] Extracting progress data from $output_file"
+        echo "[Progress Monitor] Extracting progress data from JSON events"
         
-        # Get last line of output for progress message
+        # Get last line from text output for progress message
         local last_line=""
         if [ -f "$output_file" ]; then
-            last_line=$(tail -n 1 "$output_file" | head -c 200 | sed 's/"/\\\\"/g' || echo "")
-            echo "[Progress Monitor] Last line: \${last_line:0:50}..."
+            # Get the last JSON event and extract message content if available
+            last_line=$(tail -n 5 "$json_file" 2>/dev/null | grep -o '"content":"[^"]*"' | tail -1 | sed 's/"content":"//;s/"$//' | head -c 200 || echo "Processing...")
+            echo "[Progress Monitor] Last message: \${last_line:0:50}..."
         else
             echo "[Progress Monitor] Output file not found: $output_file"
+            last_line="Processing..."
         fi
         
-        # Extract token stats
-        echo "[Progress Monitor] Extracting token stats..."
-        local stats=$(extract_token_stats "$output_file")
+        # Extract token stats from JSON events
+        echo "[Progress Monitor] Extracting token stats from JSON..."
+        local stats=$(extract_token_stats "$json_file")
         echo "[Progress Monitor] Stats: $stats"
         
         # Parse stats JSON for building progress
@@ -315,17 +315,18 @@ echo "================================"
 
 # Run opencode and capture output to file
 OPENCODE_OUTPUT_FILE="/tmp/opencode-output.txt"
+OPENCODE_JSON_FILE="/tmp/opencode-events.jsonl"
 OPENCODE_EXIT_CODE=0
 
-# Run opencode with the prompt, capturing output
+# Run opencode with JSON format for easy parsing of events
 echo "Starting OpenCode in background..."
-opencode run "${escapedPrompt} !ALWAYS COMMIT YOUR WORK TO BRANCH ${branchName} AND PUSH WHEN YOU ARE DONE!" 2>&1 | tee "$OPENCODE_OUTPUT_FILE" &
+opencode run --format json "${escapedPrompt} !ALWAYS COMMIT YOUR WORK TO BRANCH ${branchName} AND PUSH WHEN YOU ARE DONE!" 2>&1 | tee "$OPENCODE_OUTPUT_FILE" > "$OPENCODE_JSON_FILE" &
 OPENCODE_PID=$!
 echo "OpenCode started with PID: $OPENCODE_PID"
 
 # Start progress monitor in background
 echo "Starting progress monitor in background..."
-monitor_progress "$OPENCODE_OUTPUT_FILE" "$OPENCODE_PID" &
+monitor_progress "$OPENCODE_JSON_FILE" "$OPENCODE_OUTPUT_FILE" "$OPENCODE_PID" &
 MONITOR_PID=$!
 echo "Progress monitor started with PID: $MONITOR_PID"
 
@@ -354,8 +355,8 @@ if [ -f "$OPENCODE_OUTPUT_FILE" ]; then
     # Get last 20 non-empty lines, take last 500 chars, escape for JSON
     SUMMARY=$(tail -n 50 "$OPENCODE_OUTPUT_FILE" | grep -v '^$' | tail -c 500 | tr '\\n' ' ' | sed 's/"/\\\\"/g' | sed "s/'/\\\\'/g")
     
-    # Extract final token stats
-    STATS_JSON=$(extract_token_stats "$OPENCODE_OUTPUT_FILE")
+    # Extract final token stats from JSON events
+    STATS_JSON=$(extract_token_stats "$OPENCODE_JSON_FILE")
 fi
 
 # Disable exit on error for final webhook sending
