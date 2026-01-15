@@ -103,7 +103,7 @@ export function generateCallbackScript(config: CallbackScriptConfig): string {
 
   // Git user config from environment
   const gitUserEmail = process.env.GH_USER_EMAIL || "abraxas@sprites.dev";
-  const gitUserName = process.env.GH_USER_NAME || "Abraxas";
+  const gitUserName = process.env.GH_USER_NAME || "abraxxxxas";
 
   return `#!/bin/bash
 set -euo pipefail
@@ -314,10 +314,6 @@ set -e
 echo ""
 echo "Running opencode..."
 echo "================================"
-
-# Send webhook to indicate opencode is starting
-echo "Sending 'started' webhook..."
-send_webhook "started" "" "" "" "" || echo "WARNING: Failed to send started webhook (continuing anyway)"
 
 # Run opencode and capture output to file
 OPENCODE_OUTPUT_FILE="/tmp/opencode-output.txt"
