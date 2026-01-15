@@ -124,10 +124,12 @@ function DroppableColumn({
   id,
   color,
   children,
+  style,
 }: {
   id: string;
   color: string;
   children: React.ReactNode;
+  style?: React.CSSProperties;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id });
 
@@ -140,6 +142,7 @@ function DroppableColumn({
         borderColor: isOver
           ? undefined
           : color.replace("border-", "").replace("/", " / "),
+        ...style,
       }}
     >
       {children}
@@ -572,12 +575,33 @@ export default function RitualBoardPage({
         </div>
 
         {/* Board Columns */}
-        <div className="grid grid-cols-6 gap-4 overflow-x-auto">
+        <div
+          className="grid gap-4 overflow-x-auto"
+          style={{
+            gridTemplateColumns: 'repeat(5, 1fr)',
+            gridTemplateRows: '1fr 1fr'
+          }}
+        >
           {COLUMNS.map((column) => {
             const columnInvocations = getInvocationsByStatus(column.id);
 
+            // Define grid positions - other columns span both rows
+            const gridStyles: Record<string, { gridColumn: number | string; gridRow: number | string }> = {
+              abyss: { gridColumn: 1, gridRow: '1 / 3' },
+              altar: { gridColumn: 2, gridRow: '1 / 3' },
+              ritual: { gridColumn: 3, gridRow: '1 / 3' },
+              trial: { gridColumn: 4, gridRow: 1 },
+              cursed: { gridColumn: 4, gridRow: 2 },
+              vanquished: { gridColumn: 5, gridRow: '1 / 3' },
+            };
+
             return (
-              <DroppableColumn key={column.id} id={column.id} color={column.color}>
+              <DroppableColumn
+                key={column.id}
+                id={column.id}
+                color={column.color}
+                style={gridStyles[column.id]}
+              >
                 {/* Column Header */}
                 <div className="mb-4">
                   <div className="flex items-center justify-between">
