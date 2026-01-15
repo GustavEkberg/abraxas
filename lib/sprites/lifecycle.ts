@@ -1,17 +1,17 @@
-import { Effect, Data } from "effect"
+import { Effect, Data } from "effect";
 import {
   createSprite,
   destroySprite,
   execCommand,
   SpritesConfig,
   SpritesError,
-} from "./client"
+} from "./client";
 import {
   generateCallbackScript,
   generateWebhookSecret,
   DEFAULT_SETUP_SCRIPT,
-} from "./callback-script"
-import type { Task, Project } from "@/schemas"
+} from "./callback-script";
+import type { Task, Project } from "@/schemas";
 
 /**
  * Error when sprite execution fails.
@@ -19,45 +19,45 @@ import type { Task, Project } from "@/schemas"
 export class SpriteExecutionError extends Data.TaggedError(
   "SpriteExecutionError"
 )<{
-  readonly message: string
-  readonly spriteName?: string
-  readonly cause?: unknown
-}> {}
+  readonly message: string;
+  readonly spriteName?: string;
+  readonly cause?: unknown;
+}> { }
 
-export type SpriteLifecycleError = SpritesError | SpriteExecutionError
+export type SpriteLifecycleError = SpritesError | SpriteExecutionError;
 
 /**
  * Configuration for spawning a sprite for a task.
  */
 export interface SpawnSpriteConfig {
-  task: Pick<Task, "id" | "title" | "description" | "type">
-  project: Pick<Project, "id" | "name" | "repositoryUrl" | "githubToken">
-  prompt: string
+  task: Pick<Task, "id" | "title" | "description" | "type">;
+  project: Pick<Project, "id" | "name" | "repositoryUrl" | "githubToken">;
+  prompt: string;
   comments?: Array<{
-    content: string
-    isAgentComment: boolean
-    agentName?: string | null
-    createdAt: Date
-  }>
+    content: string;
+    isAgentComment: boolean;
+    agentName?: string | null;
+    createdAt: Date;
+  }>;
 }
 
 /**
  * Result of spawning a sprite.
  */
 export interface SpawnSpriteResult {
-  spriteName: string
-  webhookSecret: string
-  branchName: string
+  spriteName: string;
+  webhookSecret: string;
+  branchName: string;
 }
 
 /**
  * Generate a unique sprite name for a task.
  */
 export function generateSpriteName(taskId: string): string {
-  const timestamp = Date.now()
+  const timestamp = Date.now();
   // Sprite names must be alphanumeric with dashes, max 63 chars
-  const shortTaskId = taskId.replace(/-/g, "").slice(0, 12)
-  return `abraxas-${shortTaskId}-${timestamp}`
+  const shortTaskId = taskId.replace(/-/g, "").slice(0, 12);
+  return `abraxas-${shortTaskId}-${timestamp}`;
 }
 
 /**
@@ -68,10 +68,10 @@ export function generateBranchName(taskId: string, taskTitle: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "")
-    .slice(0, 30)
+    .slice(0, 30);
 
-  const shortTaskId = taskId.replace(/-/g, "").slice(0, 8)
-  return `abraxas/${shortTaskId}-${slugifiedTitle}`
+  const shortTaskId = taskId.replace(/-/g, "").slice(0, 8);
+  return `abraxas/${shortTaskId}-${slugifiedTitle}`;
 }
 
 /**
@@ -82,9 +82,9 @@ export function generateBranchName(taskId: string, taskTitle: string): string {
  */
 export const spawnSpriteForTask = (config: SpawnSpriteConfig) =>
   Effect.gen(function* () {
-    const spritesConfig = yield* SpritesConfig
+    const spritesConfig = yield* SpritesConfig;
 
-    const { task, project, prompt } = config
+    const { task, project, prompt } = config;
 
     // Validate project has repository URL
     if (!project.repositoryUrl) {
@@ -93,15 +93,15 @@ export const spawnSpriteForTask = (config: SpawnSpriteConfig) =>
           message:
             "Project does not have a repository URL configured. Required for sprite execution.",
         })
-      )
+      );
     }
 
-    const spriteName = generateSpriteName(task.id)
-    const webhookSecret = generateWebhookSecret()
-    const branchName = generateBranchName(task.id, task.title)
-    const webhookUrl = `${spritesConfig.webhookBaseUrl}/api/webhooks/sprite/${task.id}`
+    const spriteName = generateSpriteName(task.id);
+    const webhookSecret = generateWebhookSecret();
+    const branchName = generateBranchName(task.id, task.title);
+    const webhookUrl = `${spritesConfig.webhookBaseUrl}/api/webhooks/sprite/${task.id}`;
 
-    console.log(`[Sprite] Creating sprite: ${spriteName}`)
+    console.log(`[Sprite] Creating sprite: ${spriteName}`);
 
     // Create the sprite
     yield* createSprite(spriteName, "sprite").pipe(
@@ -113,12 +113,12 @@ export const spawnSpriteForTask = (config: SpawnSpriteConfig) =>
             cause: error,
           })
       )
-    )
+    );
 
     try {
       // Generate the execution script with setup phase
       // Setup script installs opencode if not using a pre-configured image
-      const setupScript = spritesConfig.setupScript || DEFAULT_SETUP_SCRIPT
+      const setupScript = spritesConfig.setupScript || DEFAULT_SETUP_SCRIPT;
 
       const script = generateCallbackScript({
         sessionId: task.id,
@@ -130,10 +130,12 @@ export const spawnSpriteForTask = (config: SpawnSpriteConfig) =>
         githubToken: project.githubToken,
         branchName,
         setupScript,
-      })
+      });
 
       // Write script to sprite and execute
-      console.log(`[Sprite] Writing and executing script in ${spriteName}`)
+      console.log(`--------------Created Sprite--------------`);
+      console.log(spriteName);
+      console.log(`------------------------------------------`);
 
       // Write the script to a file in the sprite
       yield* execCommand(spriteName, ["bash", "-c", `cat > /tmp/abraxas-run.sh`], {
@@ -147,7 +149,7 @@ export const spawnSpriteForTask = (config: SpawnSpriteConfig) =>
               cause: error,
             })
         )
-      )
+      );
 
       // Make it executable
       yield* execCommand(spriteName, ["chmod", "+x", "/tmp/abraxas-run.sh"]).pipe(
@@ -159,7 +161,7 @@ export const spawnSpriteForTask = (config: SpawnSpriteConfig) =>
               cause: error,
             })
         )
-      )
+      );
 
       // Execute the script in the background (fire and forget)
       // The script will send a webhook when done
@@ -177,28 +179,28 @@ export const spawnSpriteForTask = (config: SpawnSpriteConfig) =>
               cause: error,
             })
         )
-      )
+      );
 
-      console.log(`[Sprite] Execution started for ${spriteName}`)
+      console.log(`[Sprite] Execution started for ${spriteName}`);
 
       return {
         spriteName,
         webhookSecret,
         branchName,
-      } satisfies SpawnSpriteResult
+      } satisfies SpawnSpriteResult;
     } catch (error) {
       // If setup fails, destroy the sprite
-      console.error(`[Sprite] Setup failed, destroying ${spriteName}:`, error)
-      yield* destroySprite(spriteName).pipe(Effect.catchAll(() => Effect.void))
-      throw error
+      console.error(`[Sprite] Setup failed, destroying ${spriteName}:`, error);
+      yield* destroySprite(spriteName).pipe(Effect.catchAll(() => Effect.void));
+      throw error;
     }
-  })
+  });
 
 /**
  * Destroy a sprite for a task.
  */
 export const destroySpriteForTask = (spriteName: string) =>
   Effect.gen(function* () {
-    console.log(`[Sprite] Destroying sprite: ${spriteName}`)
-    yield* destroySprite(spriteName)
+    console.log(`[Sprite] Destroying sprite: ${spriteName}`);
+    yield* destroySprite(spriteName);
   })
