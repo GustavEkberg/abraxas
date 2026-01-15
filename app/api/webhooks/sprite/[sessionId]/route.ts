@@ -11,7 +11,7 @@ import { destroySprite } from "@/lib/sprites/client"
  * Webhook payload types from Sprite execution.
  */
 interface WebhookPayload {
-  type: "completed" | "error" | "question" | "progress"
+  type: "started" | "completed" | "error" | "question" | "progress"
   sessionId: string
   taskId: string
   summary?: string
@@ -149,6 +149,10 @@ export async function POST(
     console.log(`[Webhook] Processing ${payload.type} for task ${session.taskId}`)
     
     switch (payload.type) {
+      case "started":
+        yield* handleStarted(session.taskId)
+        console.log(`[Webhook] Task ${session.taskId} marked as started`)
+        break
       case "completed":
         yield* handleCompletion(session.taskId, session.id, payload)
         console.log(`[Webhook] Task ${session.taskId} marked as completed`)
@@ -175,8 +179,8 @@ export async function POST(
         )
     }
 
-    // Destroy sprite after completion or error (not for questions or progress)
-    if (payload.type !== "question" && payload.type !== "progress" && session.spriteName) {
+    // Destroy sprite after completion or error (not for questions, progress, or started)
+    if (payload.type !== "question" && payload.type !== "progress" && payload.type !== "started" && session.spriteName) {
       console.log(`[Webhook] Destroying sprite: ${session.spriteName}`)
       yield* destroySprite(session.spriteName).pipe(
         Effect.tap(() => Effect.sync(() => 
@@ -217,6 +221,20 @@ export async function POST(
   }
 
   return NextResponse.json(result)
+}
+
+/**
+ * Handle execution started.
+ */
+function handleStarted(taskId: string) {
+  return Effect.gen(function* () {
+    // Add agent comment to indicate OpenCode has started
+    yield* Comments.createAgentComment(
+      taskId,
+      `OpenCode execution started. The demons are now summoning...`,
+      "Abraxas"
+    )
+  })
 }
 
 /**

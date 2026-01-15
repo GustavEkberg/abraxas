@@ -315,6 +315,10 @@ echo ""
 echo "Running opencode..."
 echo "================================"
 
+# Send webhook to indicate opencode is starting
+echo "Sending 'started' webhook..."
+send_webhook "started" "" "" "" "" || echo "WARNING: Failed to send started webhook (continuing anyway)"
+
 # Run opencode and capture output to file
 OPENCODE_OUTPUT_FILE="/tmp/opencode-output.txt"
 OPENCODE_JSON_FILE="/tmp/opencode-events.jsonl"
