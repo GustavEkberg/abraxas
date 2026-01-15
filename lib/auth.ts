@@ -37,10 +37,8 @@ export const auth = betterAuth({
         }
 
         // User exists - send the magic link
-        if (process.env.NODE_ENV === "development") {
-          console.log("🔮 Magic link for", email);
-          console.log("🔗 URL:", url);
-        }
+        console.log("🔮 Magic link for", email);
+        console.log("🔗 URL:", url);
 
         // TODO: In production, send actual email via service (Resend, SendGrid, etc.)
         // Example:
