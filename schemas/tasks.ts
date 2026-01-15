@@ -38,6 +38,7 @@ export const taskTypeEnum = pgEnum("task_type", [
 
 export const taskModel = pgEnum("task_model", [
   "grok-1",
+  "claude-opus-4-5",
   "claude-sonnet-4-5",
   "claude-haiku-4-5"
 ]);

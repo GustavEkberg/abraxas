@@ -20,7 +20,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TaskModel, TaskType } from "@/schemas";
+import { TaskType } from "@/schemas";
+import { AVAILABLE_TASK_MODELS } from "@/lib/constants";
 
 interface CreateInvocationDialogProps {
   ritualId: string;
@@ -51,12 +52,6 @@ export function CreateInvocationDialog({
     "feature",
     "plan",
     "other",
-  ];
-
-  const AVAILABLE_MODELS: TaskModel[] = [
-    "grok-1",
-    "claude-sonnet-4-5",
-    "claude-haiku-4-5",
   ];
 
   const resetForm = () => {
@@ -179,7 +174,7 @@ export function CreateInvocationDialog({
                   <SelectValue placeholder="Select a model" />
                 </SelectTrigger>
                 <SelectContent className="border-white/10 bg-zinc-950">
-                  {AVAILABLE_MODELS.map((modelName) => (
+                  {AVAILABLE_TASK_MODELS.map((modelName) => (
                     <SelectItem key={modelName} value={modelName}>
                       {modelName}
                     </SelectItem>

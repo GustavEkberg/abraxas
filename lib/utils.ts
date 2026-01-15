@@ -19,6 +19,11 @@ export const getTaskModel = (task: TaskModel) => {
         modelID: "claude-sonnet-4-5-20250929",
         providerID: "anthropic"
       };
+    case "claude-opus-4-5":
+      return {
+        modelID: "claude-opus-4-5-20251101",
+        providerID: "anthropic"
+      };
     case "claude-haiku-4-5":
       return {
         modelID: "claude-haiku-4-5-20251001",

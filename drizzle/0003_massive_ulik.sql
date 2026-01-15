@@ -1,0 +1,1 @@
+ALTER TYPE "public"."task_model" ADD VALUE 'claude-opus-4-5' BEFORE 'claude-sonnet-4-5';

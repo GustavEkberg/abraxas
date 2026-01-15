@@ -125,7 +125,7 @@ export function AsciiFire({ intensity = 0 }: AsciiFireProps) {
   return (
     <pre
       ref={fireRef}
-      className="pointer-events-none fixed bottom-0 left-0 z-0 h-[400px] w-full overflow-hidden whitespace-pre text-center font-mono text-[10px] leading-[8px] text-white/40"
+      className="z-50 pointer-events-none fixed bottom-0 left-0 h-[400px] w-full overflow-hidden whitespace-pre text-center font-mono text-[10px] leading-[8px] text-white/40"
       aria-hidden="true"
     />
   );

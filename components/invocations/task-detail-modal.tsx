@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Comment } from "./comment";
 import { AddCommentForm } from "./add-comment-form";
+import { AVAILABLE_TASK_MODELS } from "@/lib/constants";
 
 interface Task {
   id: string;
@@ -76,12 +77,6 @@ export function TaskDetailModal({
     "feature",
     "plan",
     "other",
-  ];
-
-  const AVAILABLE_MODELS = [
-    "grok-1",
-    "claude-sonnet-4-5",
-    "claude-haiku-4-5",
   ];
 
   const AVAILABLE_EXECUTION_STATES = [
@@ -297,7 +292,7 @@ export function TaskDetailModal({
                 <SelectValue placeholder="Select model" />
               </SelectTrigger>
               <SelectContent className="border-white/10 bg-zinc-950">
-                {AVAILABLE_MODELS.map((model) => (
+                {AVAILABLE_TASK_MODELS.map((model) => (
                   <SelectItem key={model} value={model}>
                     {model}
                   </SelectItem>
@@ -323,18 +318,18 @@ export function TaskDetailModal({
           {((task.messageCount !== undefined && task.messageCount > 0) ||
             (task.inputTokens !== undefined && task.inputTokens > 0) ||
             (task.outputTokens !== undefined && task.outputTokens > 0)) && (
-            <div className="mb-6 flex items-center gap-4">
-              <span className="text-sm text-white/60">Session Stats:</span>
-              <span className="rounded bg-cyan-500/10 px-3 py-1 text-cyan-400 text-sm">
-                {task.messageCount || 0} messages
-              </span>
-              {((task.inputTokens || 0) + (task.outputTokens || 0) > 0) && (
+              <div className="mb-6 flex items-center gap-4">
+                <span className="text-sm text-white/60">Session Stats:</span>
                 <span className="rounded bg-cyan-500/10 px-3 py-1 text-cyan-400 text-sm">
-                  {Math.round(((task.inputTokens || 0) + (task.outputTokens || 0)) / 1000)}k tokens
+                  {task.messageCount || 0} messages
                 </span>
-              )}
-            </div>
-          )}
+                {((task.inputTokens || 0) + (task.outputTokens || 0) > 0) && (
+                  <span className="rounded bg-cyan-500/10 px-3 py-1 text-cyan-400 text-sm">
+                    {Math.round(((task.inputTokens || 0) + (task.outputTokens || 0)) / 1000)}k tokens
+                  </span>
+                )}
+              </div>
+            )}
 
           {/* Description */}
           <div className="mb-8">
