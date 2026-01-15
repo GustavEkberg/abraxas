@@ -106,7 +106,7 @@ export function generateCallbackScript(config: CallbackScriptConfig): string {
   const gitUserName = process.env.GH_USER_NAME || "Abraxas";
 
   return `#!/bin/bash
-set -e
+set -euo pipefail
 
 WEBHOOK_URL="${webhookUrl}"
 WEBHOOK_SECRET="${webhookSecret}"
@@ -120,6 +120,8 @@ send_webhook() {
     local summary="$2"
     local error="$3"
     local stats="$4"
+    
+    echo "Sending webhook: type=$type"
     
     # Build JSON payload
     local payload
@@ -139,11 +141,28 @@ send_webhook() {
     local signature
     signature="sha256=$(echo -n "$payload" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | awk '{print $2}')"
     
-    # Send webhook
-    curl -s -X POST "$WEBHOOK_URL" \\
+    echo "Webhook URL: $WEBHOOK_URL"
+    echo "Payload length: \${#payload} bytes"
+    
+    # Send webhook with verbose output and proper error handling
+    local response_code
+    response_code=$(curl -w "%{http_code}" -o /tmp/webhook-response.txt -X POST "$WEBHOOK_URL" \\
         -H "Content-Type: application/json" \\
         -H "X-Webhook-Signature: $signature" \\
-        -d "$payload"
+        -d "$payload" 2>&1)
+    
+    local curl_exit=$?
+    
+    if [ $curl_exit -eq 0 ] && [ "$response_code" = "200" ]; then
+        echo "Webhook sent successfully (HTTP $response_code)"
+        [ -f /tmp/webhook-response.txt ] && cat /tmp/webhook-response.txt
+        return 0
+    else
+        echo "ERROR: Webhook failed (curl exit: $curl_exit, HTTP: $response_code)"
+        [ -f /tmp/webhook-response.txt ] && cat /tmp/webhook-response.txt
+        echo "Full curl output: $response_code"
+        return 1
+    fi
 }
 
 # Function to escape JSON strings
@@ -170,10 +189,13 @@ echo ""
 
 # Clone repository
 echo "Cloning repository..."
+set +e  # Temporarily disable exit on error to handle webhook
 if ! git clone "${authRepoUrl}" /home/sprite/repo 2>&1; then
+    echo "ERROR: Failed to clone repository"
     send_webhook "error" "" "Failed to clone repository"
     exit 1
 fi
+set -e
 
 cd /home/sprite/repo
 
@@ -183,10 +205,13 @@ git config user.name "${gitUserName}"
 
 # Create and checkout branch
 echo "Creating branch: $BRANCH_NAME"
+set +e  # Temporarily disable exit on error to handle webhook
 if ! git checkout -b "$BRANCH_NAME" 2>&1; then
+    echo "ERROR: Failed to create branch: $BRANCH_NAME"
     send_webhook "error" "" "Failed to create branch: $BRANCH_NAME"
     exit 1
 fi
+set -e
 
 echo ""
 echo "Running opencode..."
@@ -215,6 +240,9 @@ if [ -f "$OPENCODE_OUTPUT_FILE" ]; then
     SUMMARY=$(tail -n 50 "$OPENCODE_OUTPUT_FILE" | grep -v '^$' | tail -c 500 | tr '\\n' ' ' | sed 's/"/\\\\"/g' | sed "s/'/\\\\'/g")
 fi
 
+# Disable exit on error for final webhook sending
+set +e
+
 # Check result and send webhook
 if [ $OPENCODE_EXIT_CODE -eq 0 ]; then
     echo "Execution completed successfully"
@@ -223,6 +251,11 @@ if [ $OPENCODE_EXIT_CODE -eq 0 ]; then
         send_webhook "completed" "$SUMMARY" "" ""
     else
         send_webhook "completed" "Task executed successfully" "" ""
+    fi
+    
+    WEBHOOK_EXIT=$?
+    if [ $WEBHOOK_EXIT -ne 0 ]; then
+        echo "WARNING: Webhook send failed, but task completed successfully"
     fi
 else
     echo "Execution failed with exit code: $OPENCODE_EXIT_CODE"
@@ -235,6 +268,11 @@ else
         ERROR_CONTEXT="OpenCode exited with code $OPENCODE_EXIT_CODE"
     fi
     send_webhook "error" "" "$ERROR_CONTEXT"
+    
+    WEBHOOK_EXIT=$?
+    if [ $WEBHOOK_EXIT -ne 0 ]; then
+        echo "ERROR: Failed to send error webhook"
+    fi
 fi
 
 echo ""

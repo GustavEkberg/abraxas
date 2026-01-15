@@ -99,7 +99,9 @@ export const spawnSpriteForTask = (config: SpawnSpriteConfig) =>
     const spriteName = generateSpriteName(task.id);
     const webhookSecret = generateWebhookSecret();
     const branchName = generateBranchName(task.id, task.title);
-    const webhookUrl = `${spritesConfig.webhookBaseUrl}/api/webhooks/sprite/${task.id}`;
+    // Normalize webhook base URL - remove trailing slash if present
+    const baseUrl = spritesConfig.webhookBaseUrl.replace(/\/$/, "");
+    const webhookUrl = `${baseUrl}/api/webhooks/sprite/${task.id}`;
 
     console.log(`[Sprite] Creating sprite: ${spriteName}`);
 
