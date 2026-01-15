@@ -302,6 +302,15 @@ function handleProgress(
   payload: WebhookPayload
 ) {
   return Effect.gen(function* () {
+    // Get current session to check if it's already completed
+    const session = yield* OpencodeSessions.getSessionById(sessionId)
+    
+    // Ignore progress updates if session is already completed or errored (race condition)
+    if (session.status === "completed" || session.status === "error") {
+      console.log(`[Webhook] Ignoring progress update for ${session.status} session ${sessionId}`)
+      return
+    }
+
     // Update session with incremental stats if provided
     if (payload.progress) {
       const { messageCount, inputTokens, outputTokens } = payload.progress
