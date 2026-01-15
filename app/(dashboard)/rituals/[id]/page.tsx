@@ -21,7 +21,7 @@ interface Ritual {
   id: string;
   name: string;
   description: string | null;
-  repositoryPath: string;
+  repositoryUrl: string;
 }
 
 interface Invocation {
@@ -562,7 +562,7 @@ export default function RitualBoardPage({
                 <p className="mt-2 text-white/60">{ritual.description}</p>
               )}
               <p className="mt-1 text-sm text-white/40">
-                {ritual.repositoryPath}
+                {ritual.repositoryUrl.replace("https://github.com/", "")}
               </p>
             </div>
             <button

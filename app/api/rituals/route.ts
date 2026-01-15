@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
   const program = Projects.createProject({
     userId: session.userId,
     name: body.name,
-    repositoryPath: body.repositoryPath,
+    repositoryUrl: body.repositoryUrl,
     githubToken: body.githubToken,
     agentsMdContent: body.agentsMdContent || null,
     description: body.description || null,

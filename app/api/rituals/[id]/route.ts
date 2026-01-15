@@ -88,7 +88,7 @@ export async function PATCH(
   const updateProgram = Projects.updateProject(id, {
     name: body.name,
     description: body.description,
-    repositoryPath: body.repositoryPath,
+    repositoryUrl: body.repositoryUrl,
     githubToken: body.githubToken,
     agentsMdContent: body.agentsMdContent,
   })

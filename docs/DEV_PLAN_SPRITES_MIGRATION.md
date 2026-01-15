@@ -1,88 +1,80 @@
 # Sprites.dev Integration Plan
 
+**Status: IMPLEMENTED** (code complete, pending database migration and testing)
+
 Replace local OpenCode server with remote Sprites.dev execution.
 
+## API Documentation
+- Sprites API: https://sprites.dev/api
+- Base URL: `https://api.sprites.dev/v1`
+- Auth: Bearer token via `SPRITES_TOKEN`
+
 ## Architecture Decisions
-- **Fresh Sprite per task** - Create new Sprite, destroy after completion
+- **Fresh sprites with setup script** - Each task gets a new sprite, setup script installs opencode
 - **Webhook callbacks** - Sprite calls Abraxas API on completion/error/question
-- **GH_TOKEN via env** - Pass GitHub token as environment variable
+- **GH_TOKEN per project** - GitHub token stored in projects table
+- **Cloud-only execution** - Local mode removed, all execution via Sprites
 
 ## Execution Flow
 
 ```
 1. Task dragged to "The Ritual"
-2. Create Sprite: abraxas-task-{taskId}-{timestamp}
-3. In Sprite: clone repo → run `opencode "{prompt}"` directly
-4. OpenCode completes → callback script sends webhook
-5. Webhook handler updates task status, posts comments
-6. Destroy Sprite
+2. Create Sprite: abraxas-{taskId}-{timestamp}
+3. Run setup script (installs opencode)
+4. Clone repo via https://{token}@github.com/...
+5. Run opencode with task prompt
+6. On completion/error: send HMAC-signed webhook
+7. Webhook handler updates task, posts comment
+8. Destroy sprite
 ```
-
-## New Files
-
-### `/lib/sprites/client.ts`
-Sprites API client wrapper with Effect:
-- `createSprite(name, env)` - Create sprite with environment
-- `destroySprite(name)` - Clean up sprite
-- `execCommand(name, cmd)` - Execute command in sprite
-
-### `/lib/sprites/lifecycle.ts`
-Sprite lifecycle for tasks:
-- `spawnSpriteForTask(task, project)` - Create sprite with GH_TOKEN, webhook URL
-- `destroySpriteForTask(spriteName)` - Cleanup
-
-### `/lib/sprites/remote-execution.ts`
-Execute task workflow inside Sprite:
-1. Clone repo via `https://${GH_TOKEN}@github.com/...`
-2. Run OpenCode directly: `opencode "{prompt}"` (deps pre-installed)
-3. On exit, send webhook with result
-
-### `/lib/sprites/callback-script.ts`
-Generate wrapper script that:
-- Runs `opencode "{prompt}"` and captures exit code
-- Sends HMAC-signed webhook on completion/error
-- Parses OpenCode output for summary/stats if available
-
-### `/app/api/webhooks/sprite/[sessionId]/route.ts`
-Webhook handler:
-```typescript
-POST /api/webhooks/sprite/[sessionId]
-Body: { type: 'completed'|'error'|'question', taskId, summary?, error?, question?, stats? }
-Header: X-Webhook-Signature: sha256=<hmac>
-```
-- Verify signature against stored webhookSecret
-- Update task status (trial/cursed)
-- Post agent comment
-- Destroy sprite
-
-### `/lib/sprites/cleanup.ts`
-Background cleanup job:
-- Find sessions older than 1 hour still in_progress
-- Destroy stale sprites
-- Mark sessions as timeout error
 
 ## Schema Changes
 
-**`/schemas/opencode-sessions.ts`** - Add fields:
+**`/schemas/projects.ts`**:
+- Removed `repositoryPath` (local path)
+- Added `repositoryUrl` (required, GitHub URL)
+
+**`/schemas/opencode-sessions.ts`** - Added fields:
 ```typescript
 spriteName: text("sprite_name"),
 webhookSecret: text("webhook_secret"),
-executionMode: text("execution_mode").default("local"), // 'local' | 'sprite'
+executionMode: executionModeEnum("execution_mode"), // enum: 'local' | 'sprite'
 ```
 
-## Modified Files
+## Files Created
 
-**`/app/api/rituals/[id]/tasks/[taskId]/execute/route.ts`**
-- Check `SPRITES_TOKEN` env to determine mode
-- If sprite mode: spawn sprite, create session with webhook secret, fire-and-forget execution
-- Webhook handles completion instead of session watcher
+| File | Purpose |
+|------|---------|
+| `/lib/sprites/client.ts` | Effect-based Sprites API client |
+| `/lib/sprites/lifecycle.ts` | Sprite spawning and execution orchestration |
+| `/lib/sprites/callback-script.ts` | Bash script generator with setup + webhook |
+| `/lib/sprites/cleanup.ts` | Stale session cleanup |
+| `/app/api/webhooks/sprite/[sessionId]/route.ts` | Webhook handler |
+| `/app/api/cron/cleanup/route.ts` | Cron endpoint for cleanup |
+
+## Files Modified
+
+| File | Changes |
+|------|---------|
+| `/app/api/rituals/[id]/tasks/[taskId]/execute/route.ts` | Simplified to sprite-only execution |
+| `/lib/opencode/task-execution.ts` | Removed local mode, kept `buildTaskPrompt` |
+| `/components/rituals/create-ritual-dialog.tsx` | Changed to `repositoryUrl` |
+| `/app/(dashboard)/page.tsx` | Changed to `repositoryUrl` |
+| `/app/(dashboard)/rituals/[id]/page.tsx` | Changed to `repositoryUrl` |
+| `/app/api/rituals/route.ts` | Changed to `repositoryUrl` |
+| `/app/api/rituals/[id]/route.ts` | Changed to `repositoryUrl` |
 
 ## Environment Variables
 
 ```bash
+# Required
 SPRITES_TOKEN=your-sprites-api-token
 WEBHOOK_BASE_URL=https://your-app.vercel.app
-SPRITE_TIMEOUT_MS=3600000  # 1 hour
+
+# Optional
+SPRITE_TIMEOUT_MS=3600000  # Default: 1 hour
+SPRITE_SETUP_SCRIPT="..."  # Custom setup script (default installs opencode via npm)
+CRON_SECRET=...            # Auth for cleanup cron endpoint
 ```
 
 ## Webhook Payloads
@@ -102,21 +94,33 @@ SPRITE_TIMEOUT_MS=3600000  # 1 hour
 {"type":"question","sessionId":"...","taskId":"...","question":"Should I proceed?"}
 ```
 
-## Implementation Order
+## Prerequisites Before Testing
 
-1. Sprites client (`/lib/sprites/client.ts`)
-2. Schema updates + migration
-3. Webhook handler + callback script
-4. Remote execution service
-5. Execute API mode selection
-6. Cleanup job
+1. **Database migration** - New schema fields:
+   - Remove `projects.repositoryPath`
+   - Add `projects.repositoryUrl` (required)
+   - Add `opencodeSessions.spriteName`
+   - Add `opencodeSessions.webhookSecret`
+   - Add `opencodeSessions.executionMode` enum
+   - Add `execution_mode` enum type
 
-## Verification
+2. **Environment setup**:
+   - Set `SPRITES_TOKEN` from sprites.dev
+   - Set `WEBHOOK_BASE_URL` to deployed app URL
 
-1. Set `SPRITES_TOKEN` in env
-2. Drag task to "The Ritual"
-3. Verify Sprite created (check Sprites.dev dashboard)
-4. Verify repo cloned and OpenCode running
-5. Verify webhook received on completion
+3. **Update existing projects**:
+   - Add `repositoryUrl` for any existing projects
+
+## Verification Steps
+
+1. Set environment variables
+2. Create/update a ritual with GitHub URL
+3. Create a task and drag to "The Ritual"
+4. Verify in Sprites.dev dashboard:
+   - Sprite created
+   - Setup script runs
+   - Repo cloned
+   - opencode executes
+5. Verify webhook received
 6. Verify task moved to "Trial" with agent comment
-7. Verify Sprite destroyed
+7. Verify sprite destroyed

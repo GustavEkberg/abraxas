@@ -11,7 +11,8 @@ export const projects = pgTable("projects", {
     .references(() => user.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   description: text("description"),
-  repositoryPath: text("repository_path").notNull(),
+  // GitHub repository URL (e.g., https://github.com/owner/repo)
+  repositoryUrl: text("repository_url").notNull(),
   githubToken: text("github_token").notNull(),
   agentsMdContent: text("agents_md_content"),
   createdAt: timestamp("created_at").notNull().defaultNow(),

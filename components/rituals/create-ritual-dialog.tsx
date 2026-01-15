@@ -32,7 +32,7 @@ export function CreateRitualDialog({ trigger }: CreateRitualDialogProps) {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    repositoryPath: "",
+    repositoryUrl: "",
     githubToken: "",
     agentsMdContent: "",
   })
@@ -60,7 +60,7 @@ export function CreateRitualDialog({ trigger }: CreateRitualDialogProps) {
       setFormData({
         name: "",
         description: "",
-        repositoryPath: "",
+        repositoryUrl: "",
         githubToken: "",
         agentsMdContent: "",
       })
@@ -127,24 +127,24 @@ export function CreateRitualDialog({ trigger }: CreateRitualDialogProps) {
             />
           </div>
 
-          {/* Repository Path */}
+          {/* Repository URL */}
           <div className="space-y-2">
-            <Label htmlFor="repositoryPath">Repository Path</Label>
+            <Label htmlFor="repositoryUrl">Repository URL</Label>
             <Input
-              id="repositoryPath"
-              placeholder="/path/to/your/repository"
-              value={formData.repositoryPath}
+              id="repositoryUrl"
+              placeholder="https://github.com/owner/repo"
+              value={formData.repositoryUrl}
               onChange={(e) =>
                 setFormData((prev) => ({
                   ...prev,
-                  repositoryPath: e.target.value,
+                  repositoryUrl: e.target.value,
                 }))
               }
               required
               disabled={loading}
             />
             <p className="text-sm text-white/40">
-              Absolute path to the repository on your machine
+              GitHub repository URL (e.g., https://github.com/owner/repo)
             </p>
           </div>
 

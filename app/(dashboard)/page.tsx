@@ -10,7 +10,7 @@ interface Ritual {
   id: string;
   name: string;
   description: string | null;
-  repositoryPath: string;
+  repositoryUrl: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -109,7 +109,7 @@ export default function RitualsPage() {
                 )}
                 <div className="mt-4 flex items-center justify-between border-t border-white/5 pt-4">
                   <div className="text-xs text-white/40">
-                    {ritual.repositoryPath.split("/").pop()}
+                    {ritual.repositoryUrl.replace("https://github.com/", "")}
                   </div>
                   <div className="text-xs text-white/40">
                     {new Date(ritual.createdAt).toLocaleDateString()}
