@@ -85,18 +85,18 @@ export function AsciiFire({ intensity = 0 }: AsciiFireProps) {
     }
 
     function getFireColor(intensity: number): string {
-      if (intensity <= 35) {
+      if (intensity <= 120) {
         return "rgba(255, 255, 255, 0.4)"; // white
       }
 
       // Above 35, interpolate towards red/yellow
       // At intensity 120, should be fully red/yellow
-      const colorProgress = Math.min((intensity - 35) / (120 - 35), 1);
+      const colorProgress = Math.min((intensity - 120), 1);
 
       // Interpolate from white (255,255,255) to orange-red (255,100,0)
-      const r = 255;
-      const g = Math.round(255 - (colorProgress * 155)); // 255 -> 100
-      const b = Math.round(255 - (colorProgress * 255)); // 255 -> 0
+      const r = Math.round(255 - (colorProgress * 255)); // 255 -> 0
+      const g = 0;
+      const b = 0;
 
       return `rgba(${r}, ${g}, ${b}, 0.4)`;
     }
