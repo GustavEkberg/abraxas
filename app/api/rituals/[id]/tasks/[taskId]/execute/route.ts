@@ -151,13 +151,16 @@ export async function POST(
       "Abraxas"
     );
 
-    const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-    waitUntil((async () => {
-      await delay(9000);
+    const wakeUpSprite = Effect.gen(function* () {
+      yield* Effect.sleep("9 seconds");
       console.log(`[Sprite] Sending wake-up command...`);
-      execCommand(spriteResult.spriteName, ["ps", "aux"]);
-    })());
+      yield* Effect.sync(() =>
+        execCommand(spriteResult.spriteName, ["ps", "aux"])
+      );
+    }).pipe(Effect.scoped);
+
+    waitUntil(Effect.runPromise(wakeUpSprite));
 
     return {
       success: true,
