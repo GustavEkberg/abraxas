@@ -32,6 +32,7 @@ interface Invocation {
   status: string;
   executionState: string;
   model: string;
+  branchName?: string | null;
   createdAt: Date;
   messageCount?: number;
   inputTokens?: number;
@@ -653,6 +654,7 @@ export default function RitualBoardPage({
           <TaskDetailModal
             task={selectedTask}
             ritualId={ritualId}
+            repositoryUrl={ritual?.repositoryUrl}
             open={showTaskDetail}
             onOpenChange={setShowTaskDetail}
             onUpdate={fetchInvocations}

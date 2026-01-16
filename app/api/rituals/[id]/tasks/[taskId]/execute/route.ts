@@ -110,6 +110,7 @@ export async function POST(
         title: task.title,
         description: task.description,
         type: task.type,
+        branchName: task.branchName,
       },
       project: {
         id: ritual.id,
@@ -126,8 +127,10 @@ export async function POST(
       })
     )
 
-    // Update task with branch name
-    yield* Tasks.updateTask(taskId, { branchName: spriteResult.branchName })
+    // Update task with branch name if it's new
+    if (!task.branchName) {
+      yield* Tasks.updateTask(taskId, { branchName: spriteResult.branchName })
+    }
 
     // Create session record with sprite info
     const opencodeSession = yield* OpencodeSessions.createSession({

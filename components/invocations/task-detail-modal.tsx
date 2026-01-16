@@ -31,6 +31,8 @@ interface Task {
   messageCount?: number;
   inputTokens?: number;
   outputTokens?: number;
+  branchName?: string | null;
+  pullRequestUrl?: string | null;
 }
 
 interface Comment {
@@ -46,6 +48,7 @@ interface Comment {
 interface TaskDetailModalProps {
   task: Task | null;
   ritualId: string;
+  repositoryUrl?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdate?: () => void;
@@ -57,6 +60,7 @@ interface TaskDetailModalProps {
 export function TaskDetailModal({
   task,
   ritualId,
+  repositoryUrl,
   open,
   onOpenChange,
   onUpdate,
@@ -274,6 +278,19 @@ export function TaskDetailModal({
             <span className="rounded-full bg-red-500/20 px-3 py-1 text-red-400 text-sm">
               {task.status}
             </span>
+            {task.branchName && repositoryUrl && (
+              <>
+                <span className="text-sm text-white/60 ml-4">Branch:</span>
+                <a
+                  href={`${repositoryUrl}/tree/${task.branchName}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded bg-purple-500/20 px-3 py-1 text-purple-400 text-sm hover:bg-purple-500/30 transition-colors duration-200"
+                >
+                  {task.branchName}
+                </a>
+              </>
+            )}
             <span className="text-sm text-white/60 ml-4">Type:</span>
             <Select value={selectedType} onValueChange={handleTypeChange} disabled={updatingType}>
               <SelectTrigger className="w-fit border-white/10 bg-zinc-900/50">

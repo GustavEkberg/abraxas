@@ -30,7 +30,7 @@ export type SpriteLifecycleError = SpritesError | SpriteExecutionError;
  * Configuration for spawning a sprite for a task.
  */
 export interface SpawnSpriteConfig {
-  task: Pick<Task, "id" | "title" | "description" | "type">;
+  task: Pick<Task, "id" | "title" | "description" | "type" | "branchName">;
   project: Pick<Project, "id" | "name" | "repositoryUrl" | "githubToken">;
   prompt: string;
   comments?: Array<{
@@ -98,12 +98,14 @@ export const spawnSpriteForTask = (config: SpawnSpriteConfig) =>
 
     const spriteName = generateSpriteName(task.id);
     const webhookSecret = generateWebhookSecret();
-    const branchName = generateBranchName(task.id, task.title);
+    // Reuse existing branch if task already has one, otherwise generate new
+    const branchName = task.branchName || generateBranchName(task.id, task.title);
     // Normalize webhook base URL - remove trailing slash if present
     const baseUrl = spritesConfig.webhookBaseUrl.replace(/\/$/, "");
     const webhookUrl = `${baseUrl}/api/webhooks/sprite/${task.id}`;
 
     console.log(`[Sprite] Creating sprite: ${spriteName}`);
+    console.log(`[Sprite] Using branch: ${branchName}${task.branchName ? " (existing)" : " (new)"}`);
 
     // Create the sprite
     yield* createSprite(spriteName, "sprite").pipe(

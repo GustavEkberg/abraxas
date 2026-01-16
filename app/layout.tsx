@@ -11,7 +11,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Abraxas - Unholy Task Execution",
+  title: "Abraxas - Task Execution from the Cosmic Void",
   description: "Summon unholy coding demons to execute your development tasks",
 };
 
