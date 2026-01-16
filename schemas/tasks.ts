@@ -60,6 +60,7 @@ export const tasks = pgTable("tasks", {
   executionState: taskExecutionStateEnum("execution_state")
     .notNull()
     .default("idle"),
+  branchName: text("branch_name"),
   completedAt: timestamp("completed_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),

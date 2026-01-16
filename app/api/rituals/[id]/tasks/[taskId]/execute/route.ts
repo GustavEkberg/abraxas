@@ -126,6 +126,9 @@ export async function POST(
       })
     )
 
+    // Update task with branch name
+    yield* Tasks.updateTask(taskId, { branchName: spriteResult.branchName })
+
     // Create session record with sprite info
     const opencodeSession = yield* OpencodeSessions.createSession({
       taskId,
