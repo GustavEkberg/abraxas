@@ -153,7 +153,12 @@ export async function POST(
 
 
     const wakeUpSprite = Effect.gen(function* () {
-      yield* Effect.sleep("9 seconds");
+      yield* Effect.sleep("15 seconds");
+      console.log(`[Sprite] Sending wake-up command...`);
+      yield* Effect.sync(() =>
+        execCommand(spriteResult.spriteName, ["ps", "aux"])
+      );
+      yield* Effect.sleep("14 seconds");
       console.log(`[Sprite] Sending wake-up command...`);
       yield* Effect.sync(() =>
         execCommand(spriteResult.spriteName, ["ps", "aux"])
