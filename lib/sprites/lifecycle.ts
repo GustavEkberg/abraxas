@@ -119,23 +119,6 @@ export const spawnSpriteForTask = (config: SpawnSpriteConfig) =>
       )
     );
 
-    // Wait 9 seconds for sprite to fully initialize, then wake it up
-    console.log(`[Sprite] Waiting 9 seconds for sprite initialization...`);
-    yield* Effect.sleep("9 seconds");
-    
-    console.log(`[Sprite] Waking up sprite with ls command...`);
-    yield* execCommand(spriteName, ["ls", "-la", "/home/sprite"]).pipe(
-      Effect.mapError(
-        (error) =>
-          new SpriteExecutionError({
-            message: `Failed to wake sprite: ${error.message}`,
-            spriteName,
-            cause: error,
-          })
-      ),
-      Effect.tap(() => Effect.sync(() => console.log(`[Sprite] Sprite is awake and ready`)))
-    );
-
     try {
       // Generate the execution script with setup phase
       // Setup script installs opencode if not using a pre-configured image
@@ -203,6 +186,21 @@ export const spawnSpriteForTask = (config: SpawnSpriteConfig) =>
       );
 
       console.log(`[Sprite] Execution started for ${spriteName}`);
+
+      // Wait 9 seconds then send a wake-up command to keep sprite active
+      // This prevents the sprite from going to sleep before OpenCode starts
+      console.log(`[Sprite] Waiting 9 seconds before sending wake-up command...`);
+      yield* Effect.sleep("9 seconds");
+      
+      console.log(`[Sprite] Sending wake-up command to keep sprite active...`);
+      yield* execCommand(spriteName, ["ps", "aux"]).pipe(
+        Effect.catchAll((error) => {
+          // Don't fail the whole operation if wake-up fails, just log it
+          console.warn(`[Sprite] Wake-up command failed (non-critical):`, error);
+          return Effect.void;
+        }),
+        Effect.tap(() => Effect.sync(() => console.log(`[Sprite] Wake-up command sent`)))
+      );
 
       return {
         spriteName,
