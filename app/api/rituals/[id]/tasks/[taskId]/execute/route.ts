@@ -8,6 +8,8 @@ import * as Comments from "@/lib/effects/comments";
 import * as OpencodeSessions from "@/lib/effects/opencode-sessions";
 import { buildTaskPrompt } from "@/lib/opencode/task-execution";
 import { spawnSpriteForTask } from "@/lib/sprites/lifecycle";
+import { execCommand } from "@/lib/sprites/client";
+import { waitUntil } from "@vercel/functions";
 
 /**
  * POST /api/rituals/[id]/tasks/[taskId]/execute
@@ -47,9 +49,6 @@ export async function POST(
       );
     }
 
-    // Update task execution state to in_progress
-    yield* Tasks.updateTask(taskId, { executionState: "in_progress" });
-
     // Verify repository URL is configured
     if (!ritual.repositoryUrl) {
       return yield* Effect.fail(
@@ -63,7 +62,7 @@ export async function POST(
       );
     }
 
-    // Get task to verify ownership
+    // Get task to verify ownership and check state
     const task = yield* Tasks.getTaskById(taskId);
     if (task.projectId !== id) {
       return yield* Effect.fail(
@@ -83,6 +82,9 @@ export async function POST(
         )
       );
     }
+
+    // Update task execution state to in_progress
+    yield* Tasks.updateTask(taskId, { executionState: "in_progress" });
 
     // Get all comments for context
     const commentsList = yield* Comments.listCommentsByTaskId(taskId);
@@ -149,6 +151,14 @@ export async function POST(
       "Abraxas"
     );
 
+    const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+    waitUntil((async () => {
+      await delay(9000);
+      console.log(`[Sprite] Sending wake-up command...`);
+      execCommand(spriteResult.spriteName, ["ps", "aux"]);
+    })());
+
     return {
       success: true,
       spriteName: spriteResult.spriteName,
@@ -181,9 +191,12 @@ export async function POST(
     )
   );
 
+
+
   if (result instanceof NextResponse) {
     return result;
   }
+
 
   return NextResponse.json(result, { status: 201 });
 }
