@@ -384,6 +384,8 @@ export default function RitualBoardPage({
     // Poll every 10 seconds for status updates
     const pollInterval = setInterval(async () => {
       let needsRefresh = false;
+      const tasksToRemove: string[] = [];
+      
       for (const taskId of allRunningTaskIds) {
         try {
           const response = await fetch(
@@ -391,10 +393,25 @@ export default function RitualBoardPage({
           );
           if (response.ok) {
             needsRefresh = true;
+          } else if (response.status === 404 || response.status === 500) {
+            // Task not found or error - remove from persisted running tasks
+            tasksToRemove.push(taskId);
           }
         } catch (error) {
           console.error("Failed to poll task status:", error);
+          // On network error, also remove task from persisted list
+          tasksToRemove.push(taskId);
         }
+      }
+
+      // Clean up tasks that no longer exist or errored
+      if (tasksToRemove.length > 0) {
+        setPersistedRunningTasks(prev => {
+          const updated = prev.filter(id => !tasksToRemove.includes(id));
+          persistRunningTasks(ritualId, updated);
+          return updated;
+        });
+        tasksToRemove.forEach(taskId => removeRunningTask(taskId));
       }
 
       if (needsRefresh) {
@@ -404,7 +421,7 @@ export default function RitualBoardPage({
     }, 10000); // Poll every 10 seconds
 
     return () => clearInterval(pollInterval);
-  }, [ritualId, invocations, persistedRunningTasks, fetchInvocations]);
+  }, [ritualId, invocations, persistedRunningTasks, fetchInvocations, removeRunningTask]);
 
   const getInvocationsByStatus = (status: string) => {
     return invocations.filter((invocation) => invocation.status === status);

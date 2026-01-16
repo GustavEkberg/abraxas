@@ -32,7 +32,6 @@ interface Task {
   inputTokens?: number;
   outputTokens?: number;
   branchName?: string | null;
-  pullRequestUrl?: string | null;
 }
 
 interface Comment {
