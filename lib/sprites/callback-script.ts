@@ -320,10 +320,13 @@ OPENCODE_OUTPUT_FILE="/tmp/opencode-output.txt"
 OPENCODE_JSON_FILE="/tmp/opencode-events.jsonl"
 OPENCODE_EXIT_CODE=0
 
+# Pre-create output files to avoid tee blocking
+touch "$OPENCODE_OUTPUT_FILE" "$OPENCODE_JSON_FILE"
+
 # Run opencode with JSON format for easy parsing of events
 echo "Starting OpenCode in background..."
-# Redirect output to JSON file while also showing on console
-opencode run --format json "${escapedPrompt} !ALWAYS COMMIT YOUR WORK TO BRANCH ${branchName} AND PUSH WHEN YOU ARE DONE!" 2>&1 | tee "$OPENCODE_OUTPUT_FILE" | tee "$OPENCODE_JSON_FILE" &
+# Use process substitution to avoid tee blocking issues
+opencode run --format json "${escapedPrompt} !ALWAYS COMMIT YOUR WORK TO BRANCH ${branchName} AND PUSH WHEN YOU ARE DONE!" > >(tee "$OPENCODE_OUTPUT_FILE" "$OPENCODE_JSON_FILE") 2>&1 &
 OPENCODE_PID=$!
 echo "OpenCode started with PID: $OPENCODE_PID"
 
