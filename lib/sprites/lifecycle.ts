@@ -167,13 +167,13 @@ export const spawnSpriteForTask = (config: SpawnSpriteConfig) =>
         )
       );
 
-      // Execute the script in the background (fire and forget)
+      // Execute the script in detached screen session to keep sprite awake
+      // Using screen instead of nohup ensures the sprite sees an active process
       // The script will send a webhook when done
-      // Explicitly run with bash to ensure correct shell
       yield* execCommand(spriteName, [
         "bash",
         "-c",
-        "nohup bash /tmp/abraxas-run.sh > /tmp/abraxas.log 2>&1 &",
+        "screen -dmS abraxas bash /tmp/abraxas-run.sh",
       ]).pipe(
         Effect.mapError(
           (error) =>
