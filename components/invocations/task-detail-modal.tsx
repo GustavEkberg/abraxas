@@ -281,7 +281,7 @@ export function TaskDetailModal({
               <>
                 <span className="text-sm text-white/60 ml-4">Branch:</span>
                 <a
-                  href={`${repositoryUrl}/compare/main...${task.branchName}`}
+                  href={`${repositoryUrl}/tree/${task.branchName}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="rounded bg-purple-500/20 px-3 py-1 text-purple-400 text-sm hover:bg-purple-500/30 transition-colors duration-200"
