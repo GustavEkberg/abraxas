@@ -49,15 +49,6 @@ if ! command -v opencode &> /dev/null; then
     export PATH="$HOME/.local/bin:$HOME/bin:$HOME/.opencode/bin:$PATH"
 fi
 
-# Final check
-if ! command -v opencode &> /dev/null; then
-    echo "ERROR: opencode not found after installation"
-    echo "PATH: $PATH"
-    echo "Checking common locations:"
-    ls -la "$HOME/.local/bin/" 2>/dev/null || echo "~/.local/bin not found"
-    ls -la "$HOME/bin/" 2>/dev/null || echo "~/bin not found"
-    exit 1
-fi
 
 echo "opencode ready"
 opencode --version || true
