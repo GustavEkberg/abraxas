@@ -187,21 +187,6 @@ export const spawnSpriteForTask = (config: SpawnSpriteConfig) =>
 
       console.log(`[Sprite] Execution started for ${spriteName}`);
 
-      // Wait 9 seconds then send a wake-up command to keep sprite active
-      // This prevents the sprite from going to sleep before OpenCode starts
-      console.log(`[Sprite] Waiting 9 seconds before sending wake-up command...`);
-      yield* Effect.sleep("9 seconds");
-      
-      console.log(`[Sprite] Sending wake-up command to keep sprite active...`);
-      yield* execCommand(spriteName, ["ps", "aux"]).pipe(
-        Effect.catchAll((error) => {
-          // Don't fail the whole operation if wake-up fails, just log it
-          console.warn(`[Sprite] Wake-up command failed (non-critical):`, error);
-          return Effect.void;
-        }),
-        Effect.tap(() => Effect.sync(() => console.log(`[Sprite] Wake-up command sent`)))
-      );
-
       return {
         spriteName,
         webhookSecret,

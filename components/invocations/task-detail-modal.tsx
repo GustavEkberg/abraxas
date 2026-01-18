@@ -316,7 +316,7 @@ export function TaskDetailModal({
                 ))}
               </SelectContent>
             </Select>
-            <span className="text-sm text-white/60 ml-4">Execution State:</span>
+            <span className="text-sm text-white/60 ml-4">State:</span>
             <Select value={selectedExecutionState} onValueChange={handleExecutionStateChange} disabled={updatingExecutionState}>
               <SelectTrigger className="w-fit border-white/10 bg-zinc-900/50">
                 <SelectValue placeholder="Select state" />

@@ -1,3 +1,7 @@
+## Disclaimer
+
+This is not safe or production ready code. It is a POC and should not be used for any other purpose than learning and inspiration.
+
 # Abraxas
 
 A mystical project management interface that summons the power of OpenCode to solve development tasks autonomously.
